@@ -5,6 +5,7 @@
 
 #include "patterns.h"
 #include "tipi_mouse.h"
+#include "bitmap.h"
 
 #define SCREEN_COLOR (COLOR_BLACK << 4) + COLOR_CYAN
 
@@ -27,17 +28,12 @@ void sprite_pos(unsigned int n, unsigned int r, unsigned int c) {
   VDPWD=c;
 }
 
-void plotBit(unsigned int x, unsigned int y) {
-  unsigned int addr = (8 * (x/8)) + (256 * (y/8)) + (y%8);
-  VDP_SET_ADDRESS(addr);
-  unsigned char bits = VDPRD;
-  bits = bits | (0x80 >> (x%8));
-  VDP_SET_ADDRESS_WRITE(addr);
-  VDPWD = bits;
-}
+
 
 void main() {
+  bm_loadFont();
 
+  // now go to bitmap/graphics mode 2
   set_bitmap(VDP_SPR_16x16);
   vdpwriteinc(gImage,0,768);
   vdpmemset(gColor,SCREEN_COLOR,768*8);  
@@ -47,11 +43,18 @@ void main() {
   vdpmemcpy(gSpritePat, gfx_point0, 32);
   vdpmemcpy(gSpritePat + 32, gfx_point1, 32);
 
+  bm_putsxy(0,0, "0123456789");
+  bm_putsxy(0,1, "ABCDEFGHIJ");
+  bm_putsxy(0,2, "KLMNOPQRST");
+  bm_putsxy(0,3, "W  X  Y  Z");
+
   pointerx = 256/2;
   pointery = 192/2;
 
   sprite(SPR_MOUSE0, 0, COLOR_BLACK, pointery - 1, pointerx);
   sprite(SPR_MOUSE1, 4, COLOR_WHITE, pointery - 1, pointerx);
+
+  halt();
 
   while(true) {
     unsigned char k = kscan(0);
@@ -83,7 +86,7 @@ void main() {
     }
 
     if (mouseb & MB_LEFT) {
-      plotBit(pointerx,pointery);
+      bm_plotBit(pointerx,pointery);
     }
     if (mouseb & MB_RIGHT) {
       vdpmemset(gPattern,0,768*8);

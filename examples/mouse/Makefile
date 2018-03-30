@@ -17,6 +17,7 @@ OBJECT_LIST=\
   main.o\
   tipi_msg.o\
   tipi_mouse.o\
+  bitmap.o\
   patterns.o
 
 all: $(FNAME)
@@ -43,7 +44,7 @@ $(FNAME).elf: $(OBJECT_LIST)
 %.o: %.asm
 	$(GAS) $< -o $@
 
-%.o: %.c patterns.h tipi_mouse.h tipi_msg.h
+%.o: %.c patterns.h tipi_mouse.h tipi_msg.h bitmap.h
 	$(CC) -c $< -std=c99 -Os --save-temp -I$(LIBTI99) -I/home/matthew/dev/gcc-9900/lib/gcc/tms9900/4.4.0/include -o $@
 
 patterns.h: patterns.asm
