@@ -1,10 +1,8 @@
 GAS=tms9900-as
 LD=tms9900-ld
 CC=tms9900-gcc
-EA5SPLIT=ea5split
+OBJCOPY=tms9900-objcopy
 LIBTI99?=/home/matthew/dev/ti99/libti99
-
-ELF2EA5=elf2ea5
 
 FNAME=telnet
 UCFNAME=$(shell echo -n $(FNAME) | tr 'a-z' 'A-Z')
@@ -21,14 +19,14 @@ OBJECT_LIST=\
   oem_low_chars.o\
   oem_high_chars.o
 
-all: $(FNAME)
+all: $(FNAME).bin
 
 $(FNAME): $(FNAME).bin
 	$(EA5SPLIT) $(FNAME).bin
 	cp TELNE? ../../setup/bin/NET/
 
 $(FNAME).bin: $(FNAME).elf
-	$(ELF2EA5) $(FNAME).elf $(FNAME).bin
+	$(OBJCOPY) -O binary -j .text -j .data -j .ctors $(FNAME).elf $(FNAME).bin
 
 $(FNAME).elf: $(OBJECT_LIST)
 	$(LD) $(OBJECT_LIST) $(LDFLAGS) -L$(LIBTI99) -lti99 -o $(FNAME).elf -Map=mapfile
@@ -40,7 +38,7 @@ $(FNAME).elf: $(OBJECT_LIST)
 	rm -f *.i
 	rm -f *.s
 	rm -f mapfile
-	rm -f TELNET
+	rm -f TELNE?
 
 %.o: %.asm
 	$(GAS) $< -o $@

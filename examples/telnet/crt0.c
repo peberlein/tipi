@@ -76,7 +76,7 @@ void _start(void)
   __asm__("\tlwpi >8300");
 
   /* Create the stack before declaring any variables */
-  __asm__("\tli sp, >4000");
+  __asm__("\tli sp, >3800");
 
   /* Call the second part directly to prevent a stack for this function */
   __asm__("\tb @_start2");
