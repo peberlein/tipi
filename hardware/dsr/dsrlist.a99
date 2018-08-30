@@ -49,6 +49,41 @@ tipi3
 	EVEN
 
 tipi4
+	DATA	tipi5		; next dsr list entry
+	DATA	tipidsr
+	BYTE	4
+	TEXT	"DSK4"
+	EVEN
+
+tipi5
+	DATA	tipi6		; next dsr list entry
+	DATA	tipidsr
+	BYTE	4
+	TEXT	"DSK4"
+	EVEN
+
+tipi6
+	DATA	tipi7		; next dsr list entry
+	DATA	tipidsr
+	BYTE	4
+	TEXT	"DSK4"
+	EVEN
+
+tipi7
+	DATA	tipi8		; next dsr list entry
+	DATA	tipidsr
+	BYTE	4
+	TEXT	"DSK4"
+	EVEN
+
+tipi8
+	DATA	tipi9		; next dsr list entry
+	DATA	tipidsr
+	BYTE	4
+	TEXT	"DSK4"
+	EVEN
+
+tipi9
 	DATA	tipid		; next dsr list entry
 	DATA	tipidsr
 	BYTE	4
@@ -56,11 +91,19 @@ tipi4
 	EVEN
 
 tipid
-	DATA	tipip		; next list entry
+	DATA	clock		; next list entry
 	DATA	tipidsr		; tipi dsr routine pointer
 	BYTE	3		; TIPI Drive name length
 	TEXT	"DSK"		; name of tipi drive
 	EVEN
+
+clock
+	DATA	tipip		; next list entry
+	DATA	tipidsr		; tipi dsr routine pointer
+	BYTE	5		; TIPI Drive name length
+	TEXT	"CLOCK"		; name of tipi drive
+	EVEN
+
 	.endif
 
 	.ifeq A14, 1

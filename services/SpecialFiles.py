@@ -40,6 +40,8 @@ class SpecialFiles(object):
             if link != "":
                 devname = "PI." + link + "/" + devname[5:]
                 logger.debug("using %s to map to %s", uriShortcut, devname)
+        if devname == "CLOCK":
+            devname = "PI.CLOCK"
         if devname.startswith("PI."):
             fname = str(devname[3:])
             logger.debug("Looking for special file handler: %s", fname)
