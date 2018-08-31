@@ -20,6 +20,9 @@ def __driveMapping(key):
     if path == "" or path is None:
         return None
 
+    if path == "root":
+        return TIPI_DIR
+
     path = '/'.join([x.replace('/','.') for x in path.split('.')])
     path = TIPI_DIR + "/" + path
     return path
