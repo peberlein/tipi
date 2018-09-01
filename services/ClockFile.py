@@ -58,5 +58,5 @@ class ClockFile(object):
         if mode == 24:
             return bytearray(time.asctime())
         else:
-            return bytearray('%d,%s' % ((time.localtime().tm_wday + 1 % 7) + 1, time.strftime("%m/%d/%y,%H:%M:%S", time.localtime())))
+            return bytearray('%d,%s' % (time.localtime().tm_wday + 1 % 7, time.strftime("%m/%d/%y,%H:%M:%S", time.localtime())))
        
