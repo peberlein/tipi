@@ -6,7 +6,7 @@ LIBTI99?=/home/matthew/dev/ti99/libti99
 
 ELF2EA5=elf2ea5
 
-FNAME=tipiman
+FNAME=tipifm
 UCFNAME=$(shell echo -n $(FNAME) | tr 'a-z' 'A-Z')
 
 LDFLAGS=\

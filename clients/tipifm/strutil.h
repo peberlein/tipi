@@ -5,5 +5,6 @@ void getstr(int x, int y, char* var, int limit);
 int strcmp(const char* a, const char* b);
 int indexof(const char* str, char c);
 int basicToCstr(const char* str, char* buf);
+int basic_strcmp(const char* basstr, const char* cstr);
 
 #endif

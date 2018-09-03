@@ -3,6 +3,7 @@
 #include "strutil.h"
 #include "oem.h"
 #include "tifloat.h"
+#include "main.h"
 
 #define DSR_STATUS_EOF DST_STATUS_EOF
 
@@ -26,6 +27,10 @@ const char* const ftypes[] = {
 };
 
 void initGlobals() {
+  lentries[0].name[0] = 0;
+  rentries[0].name[0] = 0;
+  lvol.name[0] = 0;
+  rvol.name[0] = 0;
 }
 
 void sleep(int jiffies) {
@@ -65,19 +70,30 @@ void headings(int x) {
   cputsxy(x+33,1, "Sect");
 }
 
+void showMenu() {
+  cclearxy(0, 23, 79);
+  cputsxy(0,23,"[L]eft");
+  cputsxy(10,23,"[R]ight");
+}
+
 void layoutScreen() {
   clrscr();
   drawBox1(0, 0, 39, 22);
   drawBox1(40, 0, 79, 22);
   
   cputcxy(2, 0, LEFT_T);
-  printPadded(3,0, "", 32);
-  cputcxy(35, 0, RIGHT_T);
+  printPadded(3,0, "", 10);
+  cputcxy(13, 0, RIGHT_T);
   cputcxy(42, 0, LEFT_T);
-  printPadded(43,0, "", 32);
-  cputcxy(75, 0, RIGHT_T);
+  printPadded(43,0, "", 10);
+  cputcxy(53, 0, RIGHT_T);
   headings(1);
   headings(41);
+  showMenu();
+  showVolInfo(0);
+  drawEntries(0, 0);
+  showVolInfo(1);
+  drawEntries(0, 1);
 }
 
 void showVolInfo(int leftOrRight) {
@@ -129,16 +145,19 @@ void main()
   initGlobals();
   setupScreen();
   titleScreen();
-  sleep(90);
+  loadDriveDSRs();
+  sleep(30);
   layoutScreen();
 
+  catalogDrive("DSK2.", 0);
+
   while(1) {
-    char drive[32];
-    strcpy(drive, "TIPI.");  
-    getstr(0,23, drive, 32);
-    catalogDrive(drive, 0);
-    getstr(0,23, drive, 32);
-    catalogDrive(drive, 1);
+    // char drive[32];
+    // strcpy(drive, "TIPI.");  
+    // getstr(0,23, drive, 32);
+    // catalogDrive(drive, 0);
+    // getstr(0,23, drive, 32);
+    // catalogDrive(drive, 1);
   }
 }
 
