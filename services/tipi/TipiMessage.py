@@ -77,7 +77,7 @@ class TipiMessage(object):
             self.prev_syn = self.ports.getTC()
         # Reset the control signals
         self.ports.setRC(RESET)
-        logger.debug("reset protocol complete.")
+        logger.debug("handshake complete.")
 
     #
     # change mode to sending bytes
@@ -94,7 +94,6 @@ class TipiMessage(object):
             self.prev_syn = self.ports.getTC()
         self.ports.setRD(byte)
         self.ports.setRC(self.prev_syn)
-        logger.debug("Sent byte: %d", byte)
 
     #
     # change mode to sending bytes
@@ -112,7 +111,6 @@ class TipiMessage(object):
         next_ack = self.prev_syn
         val = self.ports.getTD()
         self.ports.setRC(self.prev_syn)
-        logger.debug('received byte: %d', val)
         return val
 
     #
@@ -129,9 +127,11 @@ class TipiMessage(object):
             message[i] = self.__readByte()
         elapsed = time.time() - startTime
         logger.debug(
-            'received msg len %d, rate %d bytes/sec',
+                'received msg len %d, rate %d bytes/sec, msg: \n%s',
             len(message),
-            len(message) / elapsed)
+            len(message) / elapsed,
+            self.toHexDump(message))
+
         return message
 
     #
@@ -150,6 +150,30 @@ class TipiMessage(object):
             self.__sendByte(byte)
         elapsed = time.time() - startTime
         logger.debug(
-            'sent msg len %d, rate %d bytes/sec',
+                'sent msg len %d, rate %d bytes/sec, msg: \n%s',
             len(bytes),
-            len(bytes) / elapsed)
+            len(bytes) / elapsed,
+            self.toHexDump(bytes))
+
+    # convert bytes to hexdump
+    def toHexDump(self, bytes):
+        lines = []
+        linehx = []
+        text = ""
+        counter = 0
+        for c in bytes:
+            linehx.append( '{:02x}'.format(c) )
+            s = chr(c)
+            if s > 'z' or s < '!':
+                s = ' '
+            text += s
+            counter += 1
+            if counter == 16:
+                lines.append('%s %s' % (' '.join(linehx), text))
+                linehx = []
+                text = ""
+                counter = 0
+        if counter != 0:
+            lines.append('%s %s' % (' '.join(linehx), text))
+         
+        return '\n'.join(lines)
