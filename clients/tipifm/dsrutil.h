@@ -6,8 +6,6 @@
 #define VPAB 0x3200
 #define FBUF 0x3000
 
-#define DSR_STATUS_EOF DST_STATUS_EOF
-
 // Casting rom locations to the next 3 structs should ease 
 // reasoning about any code accessing the rom header and
 // lists.
@@ -57,25 +55,25 @@ extern struct DirEntry lentries[128];
 extern struct DirEntry rentries[128];
 
 struct __attribute__((__packed__)) VolInfo {
-  char name[11];
+  char volname[11];
+  struct DeviceServiceRoutine* dsr;
 };
 
 extern struct VolInfo lvol;
 extern struct VolInfo rvol;
 
-unsigned char dsr_open(struct PAB* pab, const char* fname, int vdpbuffer, unsigned char flags, int reclen);
-unsigned char dsr_close(struct PAB* pab);
-unsigned char dsr_read(struct PAB* pab, int recordNumber);
-unsigned char dsr_write(struct PAB* pab, unsigned char* record);
+unsigned char dsr_open(struct DeviceServiceRoutine* dsr, struct PAB* pab, const char* fname, int vdpbuffer, unsigned char flags, int reclen);
+unsigned char dsr_close(struct DeviceServiceRoutine* dsr, struct PAB* pab);
+unsigned char dsr_read(struct DeviceServiceRoutine* dsr, struct PAB* pab, int recordNumber);
+unsigned char dsr_write(struct DeviceServiceRoutine* dsr, struct PAB* pab, unsigned char* record);
 
-unsigned char loadDir(const char* pathname, int leftOrRight);
+unsigned char loadDir(struct DeviceServiceRoutine* dsr, const char* pathname, int leftOrRight);
 
 void loadDriveDSRs();
 
 void enableROM(int crubase);
 void disableROM(int crubase);
 int isDrive(char *basicstr);
-unsigned char callLevel3(int crubase, struct PAB* pab, unsigned int vdp);
-unsigned int findLevel3(int crubase, char* devicename);
+unsigned char callLevel3(struct DeviceServiceRoutine* dsr, struct PAB* pab, unsigned int vdp);
 
 #endif

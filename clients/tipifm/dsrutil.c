@@ -1,6 +1,6 @@
 #include "dsrutil.h"
 
-#include <vdp.h>
+#include <conio.h>
 #include "strutil.h"
 #include "tifloat.h"
 #include <string.h>
@@ -15,10 +15,10 @@ struct DeviceServiceRoutine dsrList[40];
 struct DirEntry lentries[128];
 struct DirEntry rentries[128];
 
-unsigned char loadDir(const char* pathname, int leftOrRight) {
+unsigned char loadDir(struct DeviceServiceRoutine* dsr, const char* pathname, int leftOrRight) {
   struct PAB pab;
   
-  unsigned char ferr = dsr_open(&pab, pathname, FBUF, DSR_TYPE_INPUT | DSR_TYPE_INTERNAL | DSR_TYPE_SEQUENTIAL, 38);
+  unsigned char ferr = dsr_open(dsr, &pab, pathname, FBUF, DSR_TYPE_INPUT | DSR_TYPE_INTERNAL | DSR_TYPE_SEQUENTIAL, 38);
   if (ferr) {
     cputsxy(40,23,"open-err ");
     cputs(int2str(ferr));
@@ -36,7 +36,7 @@ unsigned char loadDir(const char* pathname, int leftOrRight) {
   ferr = DSR_ERR_NONE;
   while(ferr == DSR_ERR_NONE) {
     unsigned char cbuf[38];
-    ferr = dsr_read(&pab, recNo);
+    ferr = dsr_read(dsr, &pab, recNo);
     if (ferr == DSR_ERR_NONE) {
       // Now FBUF has the data... 
       vdpmemread(FBUF, cbuf, pab.CharCount);
@@ -51,7 +51,7 @@ unsigned char loadDir(const char* pathname, int leftOrRight) {
     }
   }
 
-  ferr = dsr_close(&pab);
+  ferr = dsr_close(dsr, &pab);
   if (ferr) {
     return ferr;
   }
@@ -70,7 +70,7 @@ void initPab(struct PAB* pab) {
   pab->CharCount = 0;
 }
 
-unsigned char dsr_open(struct PAB* pab, const char* fname, int vdpbuffer, unsigned char flags, int reclen) {
+unsigned char dsr_open(struct DeviceServiceRoutine* dsr, struct PAB* pab, const char* fname, int vdpbuffer, unsigned char flags, int reclen) {
   initPab(pab);
   pab->OpCode = DSR_OPEN;
   if (flags != 0) {
@@ -82,30 +82,30 @@ unsigned char dsr_open(struct PAB* pab, const char* fname, int vdpbuffer, unsign
   pab->pName = (char*)fname;
   pab->VDPBuffer = vdpbuffer;
 
-  return callLevel3(0x1100, pab, VPAB);
+  return callLevel3(dsr, pab, VPAB);
 }
 
-unsigned char dsr_close(struct PAB* pab) {
+unsigned char dsr_close(struct DeviceServiceRoutine* dsr, struct PAB* pab) {
   pab->OpCode = DSR_CLOSE;
 
-  return callLevel3(0x1100, pab, VPAB);
+  return callLevel3(dsr, pab, VPAB);
 }
 
 // the data read is in FBUF, the length read in pab->CharCount
 // typically passing 0 in for record number will let the controller
 // auto-increment it. 
-unsigned char dsr_read(struct PAB* pab, int recordNumber) {
+unsigned char dsr_read(struct DeviceServiceRoutine* dsr, struct PAB* pab, int recordNumber) {
   pab->OpCode = DSR_READ;
   pab->RecordNumber = recordNumber;
   pab->CharCount = 0;
 
-  unsigned char result = callLevel3(0x1100, pab, VPAB);
+  unsigned char result = callLevel3(dsr, pab, VPAB);
   vdpmemread(VPAB + 5, (&pab->CharCount), 1);
   return result;
 }
 
 int volRecordHandler(char* buf, struct VolInfo* volInfo) {
-  basicToCstr(buf, volInfo->name);
+  basicToCstr(buf, volInfo->volname);
   return 0;
 }
 
@@ -172,11 +172,11 @@ void disableROM(int crubase) {
   __asm__("mov %0,r12\n\tsbz 0" : : "r"(crubase) : "r12");
 }
 
-void invokeLevel3(int crubase, char* devicename) {
-  unsigned int routine = findLevel3(crubase, devicename);
+void invokeLevel3(struct DeviceServiceRoutine* dsr, char* devicename) {
+  unsigned int routine = dsr->addr;
 
   if (routine != 0) {
-    enableROM(crubase);
+    enableROM(dsr->crubase);
     __asm__("mov %0,@>83F2\n\t"
             "lwpi >83E0\n\t"
             "bl *r9\n\t"
@@ -184,14 +184,14 @@ void invokeLevel3(int crubase, char* devicename) {
             "lwpi >8300"
             : : "r"(routine) : "r9"
     );
-    disableROM(crubase);
+    disableROM(dsr->crubase);
   }
 }
 
 
 #define DSR_NAME_LEN	*((volatile unsigned int*)0x8354)
 
-unsigned char callLevel3(int crubase, struct PAB* pab, unsigned int vdp) {
+unsigned char callLevel3(struct DeviceServiceRoutine* dsr, struct PAB* pab, unsigned int vdp) {
   //--- borrowed from Tursi's dsrlnk
 	if (pab->NameLength == 0) {
 		pab->NameLength = strlen(pab->pName);
@@ -237,19 +237,8 @@ unsigned char callLevel3(int crubase, struct PAB* pab, unsigned int vdp) {
 	DSR_PAB_POINTER += cnt;
 
   // Jedimatt42: Now call the stored routine from dsrList 
-  invokeLevel3(crubase, buf);
+  invokeLevel3(dsr, buf);
 
 	// now return the result
 	return GET_ERROR(vdpreadchar(status));
-}
-
-unsigned int findLevel3(int crubase, char* devicename) {
-  struct DeviceServiceRoutine* head = dsrList;
-  while(head->name[0] != 0) {
-    if (!strcmp(head->name, devicename)) {
-      return head->addr;
-    }
-    head++;
-  }
-  return 0;
 }
