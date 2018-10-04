@@ -71,5 +71,3 @@ void _start(void)
   __asm__("blwp @>0000");
 }
 
-
-

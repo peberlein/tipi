@@ -2,7 +2,7 @@ GAS=tms9900-as
 LD=tms9900-ld
 CC=tms9900-gcc
 EA5SPLIT=ea5split
-LIBTI99?=/home/matthew/dev/ti99/libti99
+LIBTI99?=/home/matthew/dev/github/jedimatt42/libti99
 
 ELF2EA5=elf2ea5
 
@@ -14,6 +14,7 @@ LDFLAGS=\
 
 OBJECT_LIST=\
   crt0.o\
+  initdata.o\
   dsrutil.o\
   strutil.o\
   tifloat.o\
