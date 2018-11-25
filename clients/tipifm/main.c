@@ -26,9 +26,10 @@ const char* const ftypes[] = {
 };
 
 char buffer[256];
+struct DeviceServiceRoutine* currentDsr;
+char currentPath[256];
 
 void initGlobals() {
-  lvol.volname[0] = 0;
   buffer[0] = 0;
 }
 
@@ -53,7 +54,7 @@ void setupScreen(int width) {
 }
 
 void titleScreen() {
-  cprintf("TIPIMAN v%s\n", TIPIMAN_VER);
+  cprintf("TIPIFM v%s\n", TIPIMAN_VER);
   cprintf("File Manager for TIPI\n");
   cprintf("www.jedimatt42.com\n\n");
 }
@@ -64,10 +65,13 @@ void main()
   setupScreen(40);
   titleScreen();
   loadDriveDSRs();
+  currentDsr = dsrList;
+  strcpy(currentPath, currentDsr->name);
+  strcat(currentPath, ".");
 
   while(1) {
     strset(buffer, 0, 255);
-    cprintf("\n$ ");
+    cprintf("\n[%x.%s]\n$ ", currentDsr->crubase, currentPath);
     getstr(2, 23, buffer, 255);
     cprintf("\n");
     handleCommand(buffer);
@@ -76,27 +80,37 @@ void main()
 
 #define MATCH(x,y) (!(strcmpi(x,y)))
 
+#define COMMAND(x, y) if (MATCH(tok, x)) y();
+
 void handleCommand(char *buffer) {
   char* tok = strtok(buffer, " ");
-  if (MATCH(tok, "dir")) {
-    handleDir();
-  } else if (MATCH(tok, "drives")) {
-    handleDrives();
-  } else if (MATCH(tok, "width")) {
-    handleWidth();
-  } else if (MATCH(tok, "quit")) {
-    handleQuit();
-  } else {
-    cprintf("unknown command: %s\n", tok);
-  }
+  COMMAND("dir", handleDir)
+  else COMMAND("drives", handleDrives)
+  else COMMAND("width", handleWidth)
+  else COMMAND("quit", handleQuit)
+  else COMMAND("ver", handleVer)
+  else cprintf("unknown command: %s\n", tok);
+}
+
+void handleVer() {
+  titleScreen();
 }
 
 void handleDrives() {
   int i = 0;
+  int cb = 0;
   while(dsrList[i].name[0] != 0) {
-    cprintf("(%x) %s\n", dsrList[i].crubase, dsrList[i].name);
+    if (cb != dsrList[i].crubase) {
+      if (cb == 0) {
+        cprintf("\n");
+      }
+      cb = dsrList[i].crubase;
+      cprintf("%x -", cb);
+    }
+    cprintf(" %s", dsrList[i].name);
     i++;
   }
+  cprintf("\n");
 }
 
 void onVolInfo(struct VolInfo* volInfo) {
@@ -110,7 +124,22 @@ void onDirEntry(struct DirEntry* dirEntry) {
 }
  
 void handleDir() {
-  loadDir(&dsrList[0], "DSK0.", onVolInfo, onDirEntry);
+  char* path = strtok(0, " ");
+  struct DeviceServiceRoutine* dsr = currentDsr;
+  if (path == 0) {
+    path = currentPath;
+  } else {
+    dsr = findDsr(path);
+    if (dsr == 0) {
+      cprintf("error: no device found");
+      return;
+    }
+  }
+
+  if (path[strlen(path)-1] != '.') {
+    strcat(path, ".");
+  }
+  loadDir(dsr, path, onVolInfo, onDirEntry);
 }
 
 void handleWidth() {

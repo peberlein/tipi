@@ -5,8 +5,6 @@
 #include "tifloat.h"
 #include <string.h>
 
-struct VolInfo lvol;
-
 struct DeviceServiceRoutine dsrList[40];
 
 unsigned char loadDir(struct DeviceServiceRoutine* dsr, const char* pathname, vol_entry_cb vol_cb, dir_entry_cb dir_cb) {
@@ -235,4 +233,16 @@ unsigned char callLevel3(struct DeviceServiceRoutine* dsr, struct PAB* pab, unsi
 
 	// now return the result
 	return GET_ERROR(vdpreadchar(status));
+}
+
+struct DeviceServiceRoutine* findDsr(char* path) {
+  char* devicename = strtok(path, ".");
+  int i = 0;
+  while(dsrList[i].name[0] != 0 && 0 != strcmp(dsrList[i].name, devicename)) {
+    i++;
+  }
+  if (dsrList[i].name[0] == 0) {
+    return 0;
+  }
+  return &dsrList[i];
 }

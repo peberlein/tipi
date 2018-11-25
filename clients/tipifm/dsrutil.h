@@ -56,8 +56,6 @@ struct __attribute__((__packed__)) VolInfo {
   struct DeviceServiceRoutine* dsr;
 };
 
-extern struct VolInfo lvol;
-
 unsigned char dsr_open(struct DeviceServiceRoutine* dsr, struct PAB* pab, const char* fname, int vdpbuffer, unsigned char flags, int reclen);
 unsigned char dsr_close(struct DeviceServiceRoutine* dsr, struct PAB* pab);
 unsigned char dsr_read(struct DeviceServiceRoutine* dsr, struct PAB* pab, int recordNumber);
@@ -74,5 +72,7 @@ void enableROM(int crubase);
 void disableROM(int crubase);
 int isDrive(char *basicstr);
 unsigned char callLevel3(struct DeviceServiceRoutine* dsr, struct PAB* pab, unsigned int vdp);
+
+struct DeviceServiceRoutine* findDsr(char* path);
 
 #endif

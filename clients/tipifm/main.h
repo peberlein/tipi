@@ -12,5 +12,6 @@ void handleDir();
 void handleDrives();
 void handleWidth();
 void handleQuit();
+void handleVer();
 
 #endif

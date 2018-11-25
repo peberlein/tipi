@@ -190,3 +190,13 @@ void strset(char* buffer, char value, int limit) {
     buffer[i] = value;
   }
 }
+
+char* strcat(char* dest, char* add) {
+  int x = strlen(dest);
+  char* s = dest + x;
+  while(*add != 0) {
+    *s++ = *add++;
+  }
+  *s = 0;
+  return dest;
+}

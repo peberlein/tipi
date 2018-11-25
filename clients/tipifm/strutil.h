@@ -11,5 +11,6 @@ char* strtok(char* str, char* delim);
 char* strchr(char* str, int delim);
 int strcspn(char* string, char* chars);
 void strset(char* buffer, char value, int limit);
+char* strcat(char* dst, char* add);
 
 #endif
