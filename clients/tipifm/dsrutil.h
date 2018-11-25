@@ -49,10 +49,7 @@ struct __attribute__((__packed__)) DirEntry {
   int type;
   int sectors;
   int reclen;
-}; 
-
-extern struct DirEntry lentries[128];
-extern struct DirEntry rentries[128];
+};
 
 struct __attribute__((__packed__)) VolInfo {
   char volname[11];
@@ -60,14 +57,16 @@ struct __attribute__((__packed__)) VolInfo {
 };
 
 extern struct VolInfo lvol;
-extern struct VolInfo rvol;
 
 unsigned char dsr_open(struct DeviceServiceRoutine* dsr, struct PAB* pab, const char* fname, int vdpbuffer, unsigned char flags, int reclen);
 unsigned char dsr_close(struct DeviceServiceRoutine* dsr, struct PAB* pab);
 unsigned char dsr_read(struct DeviceServiceRoutine* dsr, struct PAB* pab, int recordNumber);
 unsigned char dsr_write(struct DeviceServiceRoutine* dsr, struct PAB* pab, unsigned char* record);
 
-unsigned char loadDir(struct DeviceServiceRoutine* dsr, const char* pathname, int leftOrRight);
+typedef void (*vol_entry_cb)(struct VolInfo*);
+typedef void (*dir_entry_cb)(struct DirEntry*);
+
+unsigned char loadDir(struct DeviceServiceRoutine* dsr, const char* pathname, vol_entry_cb vol_cb, dir_entry_cb dir_cb);
 
 void loadDriveDSRs();
 

@@ -5,31 +5,21 @@
 #include "tifloat.h"
 #include <string.h>
 
-int volRecordHandler(char* buf, struct VolInfo* volInfo);
-int catRecordHandler(char* buf, struct DirEntry* entry);
-
 struct VolInfo lvol;
-struct VolInfo rvol;
 
 struct DeviceServiceRoutine dsrList[40];
-struct DirEntry lentries[128];
-struct DirEntry rentries[128];
 
-unsigned char loadDir(struct DeviceServiceRoutine* dsr, const char* pathname, int leftOrRight) {
+unsigned char loadDir(struct DeviceServiceRoutine* dsr, const char* pathname, vol_entry_cb vol_cb, dir_entry_cb dir_cb) {
   struct PAB pab;
   
+  struct VolInfo volInfo;
+  struct DirEntry dirEntry;
+
   unsigned char ferr = dsr_open(dsr, &pab, pathname, FBUF, DSR_TYPE_INPUT | DSR_TYPE_INTERNAL | DSR_TYPE_SEQUENTIAL, 38);
   if (ferr) {
     cputsxy(40,23,"open-err ");
     cputs(int2str(ferr));
     return ferr;
-  }
-
-  struct VolInfo* volInfo = &lvol;
-  struct DirEntry* entryList = lentries; 
-  if (leftOrRight) {
-    volInfo = &rvol;
-    entryList = rentries;
   }
 
   int recNo = 0;
@@ -42,10 +32,19 @@ unsigned char loadDir(struct DeviceServiceRoutine* dsr, const char* pathname, in
       vdpmemread(FBUF, cbuf, pab.CharCount);
       // process Record
       if (recNo == 0) {
-        volRecordHandler(cbuf, volInfo);
+        basicToCstr(cbuf, volInfo.volname);
+        vol_cb(&volInfo);
       } else {
-        catRecordHandler(cbuf, &entryList[recNo - 1]);
-        entryList[recNo].name[0] = 0;
+        int namlen = basicToCstr(cbuf, dirEntry.name);
+        int a = ti_floatToInt(cbuf+1+namlen);
+        int j = ti_floatToInt(cbuf+10+namlen);
+        int k = ti_floatToInt(cbuf+19+namlen);
+        dirEntry.type = a;
+        dirEntry.sectors = j;
+        dirEntry.reclen = k;
+        if (dirEntry.name[0] != 0) {
+          dir_cb(&dirEntry);
+        }
       }
       recNo++;
     }
@@ -104,13 +103,7 @@ unsigned char dsr_read(struct DeviceServiceRoutine* dsr, struct PAB* pab, int re
   return result;
 }
 
-int volRecordHandler(char* buf, struct VolInfo* volInfo) {
-  basicToCstr(buf, volInfo->volname);
-  return 0;
-}
-
-int entry_row = 0;
-
+/*
 int catRecordHandler(char* buf, struct DirEntry* entry) {
   int namlen = basicToCstr(buf, entry->name);
   int a = ti_floatToInt(buf+1+namlen);
@@ -122,6 +115,7 @@ int catRecordHandler(char* buf, struct DirEntry* entry) {
   entry_row++;
   return 0;
 }
+*/
 
 void loadDriveDSRs() {
   struct DeviceServiceRoutine* listHead = dsrList;

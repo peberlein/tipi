@@ -2,19 +2,15 @@
 #define _MAIN_H 1
 
 void initGlobals();
-void sleep(int jiffies);
-
-void setupScreen();
+void setupScreen(int width);
 void titleScreen();
+void main();
+void sleep(int jiffies);
+void handleCommand(char * buffer);
 
-void printPadded(int x, int y, char* str, int width);
-void headings(int x);
-void showMenu();
-
-void layoutScreen();
-void showVolInfo(int leftOrRight);
-
-void drawEntries(int start, int leftOrRight);
-void catalogDrive(char* drive, int leftOrRight);
+void handleDir();
+void handleDrives();
+void handleWidth();
+void handleQuit();
 
 #endif

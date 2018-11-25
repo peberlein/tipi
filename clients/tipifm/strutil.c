@@ -6,8 +6,6 @@
 void getstr(int x, int y, char* var, int limit) {
   conio_cursorFlag = 1;
   gotoxy(x,y);
-  cclear(limit);
-  gotoxy(x,y);
   cputs(var);
 
   unsigned char normal_cursor = conio_cursorChar;
@@ -72,13 +70,12 @@ void getstr(int x, int y, char* var, int limit) {
         break;
     }
   }
-  int i=0;
-  while(var[i] != 32) {
-    i++;
+  int i = limit - 1;
+  while(var[i] == 0 || var[i] == ' ') {
+    var[i] = 0;
+    i--;
   }
-  var[i] = 0;
 }
-
 
 int strcmp(const char* a, const char* b) {
   int i=0;
@@ -89,6 +86,26 @@ int strcmp(const char* a, const char* b) {
     i++;
   } while(a[i] == b[i]);
   return a[i] - b[i];
+}
+
+char lowerchar(char c) {
+  if (c >= 'A' && c <= 'Z') {
+    return c - 'A' + 'a';
+  }
+  return c;
+}
+
+int strcmpi(const char* a, const char* b) {
+  int i=0;
+  char ch = lowerchar(a[i]);
+  do {
+    if (ch == '\0') {
+      return ch - b[i];
+    }
+    i++;
+    ch = lowerchar(a[i]);
+  } while(ch == b[i]);
+  return ch - b[i];
 }
 
 int indexof(const char* str, char c) {
@@ -120,4 +137,56 @@ int basicToCstr(const char* str, char* buf) {
   }
   buf[len] = 0;
   return len;
+}
+
+char *lasts;
+
+char* strtok(char* str, char* delim) {
+  int ch;
+
+  if (str == 0)
+	  str = lasts;
+  do {
+	  if ((ch = *str++) == '\0')
+	    return 0;
+  } while (strchr(delim, ch));
+  --str;
+  lasts = str + strcspn(str, delim);
+  if (*lasts != 0)
+	  *lasts++ = 0;
+  return str;
+}
+
+char* strchr(char* str, int delim) 
+{
+  int x;
+
+  while (1) {
+	  x = *str++;
+	  if (x == delim) {
+	    return str - 1;
+	  }
+	  if (x == 0) {
+	    return (char *) 0;
+	  }
+  }
+}
+
+int strcspn(char* string, char* chars) {
+  char c, *p, *s;
+
+  for (s = string, c = *s; c != 0; s++, c = *s) {
+	  for (p = chars; *p != 0; p++) {
+	    if (c == *p) {
+		    return s-string;
+	    }
+	  }
+  }
+  return s-string;
+}
+
+void strset(char* buffer, char value, int limit) {
+  for(int i=0; i<limit; i++) {
+    buffer[i] = value;
+  }
 }
