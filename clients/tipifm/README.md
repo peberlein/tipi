@@ -39,9 +39,9 @@ Example: List files in current folder
 $ dir
 
 Vol: TIPI
-TIPICFG    PRG 0
-TIPICFH    PRG 0
-TIPICFI    PRG 0
+TIPICFG    PRG
+TIPICFH    PRG
+TIPICFI    PRG
 ```
 
 Example: List files in root folder of TIPI. device
@@ -51,9 +51,9 @@ Example: List files in root folder of TIPI. device
 $ dir TIPI.
 
 Vol: TIPI
-TIPICFG    PRG 0
-TIPICFH    PRG 0
-TIPICFI    PRG 0
+TIPICFG    PRG
+TIPICFH    PRG
+TIPICFI    PRG
 ```
 
 Example: List files in floppy drive DSK1 (if both TIPI and Floppy Controller are present)
@@ -63,8 +63,8 @@ Example: List files in floppy drive DSK1 (if both TIPI and Floppy Controller are
 $ dir 1100.DSK1.
 
 Vol: INFOCOM
-LOAD       PRG 0
-DEADLINE   PRG 0
+LOAD       PRG
+DEADLINE   PRG
 DEAD       D/F 128
 ```
 
@@ -111,5 +111,25 @@ $ ver
 TIPIFM v1
 File Manager for TIPI
 www.jedimatt42.com
+```
+
+## width
+
+Change display width. TIPIFM starts in 40 column mode.
+
+syntax: 'width' (40|80)
+
+Example: Set 80 column mode
+
+```
+[1000.TIPI.]
+$ width 80
+```
+
+Example: Set 40 column mode
+
+```
+[1000.TIPI.]
+$ width 40
 ```
 
