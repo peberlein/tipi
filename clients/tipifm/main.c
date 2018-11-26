@@ -62,7 +62,7 @@ void setupScreen(int width) {
 void titleScreen() {
   cprintf("TIPIFM v%s\n", TIPIMAN_VER);
   cprintf("File Manager for TIPI\n");
-  cprintf("www.jedimatt42.com\n\n");
+  cprintf("www.jedimatt42.com\n");
 }
 
 void main()
@@ -91,12 +91,27 @@ void main()
 
 void handleCommand(char *buffer) {
   char* tok = strtok(buffer, " ");
-  COMMAND("dir", handleDir)
+  COMMAND("cd", handleCd)
+  else COMMAND("dir", handleDir)
   else COMMAND("drives", handleDrives)
   else COMMAND("width", handleWidth)
   else COMMAND("quit", handleQuit)
   else COMMAND("ver", handleVer)
   else cprintf("unknown command: %s\n", tok);
+}
+
+void handleCd() {
+  struct DeviceServiceRoutine* dsr = 0;
+  char* path = parsePathParam(&dsr);
+  if (path == 0 || dsr == 0) {
+    return;
+  }
+  if (path[strlen(path)-1] != '.') {
+    strcat(path, ".");
+  }
+  // TODO: validate
+  currentDsr = dsr;
+  strcpy(currentPath, path);
 }
 
 void handleVer() {
@@ -157,25 +172,33 @@ int parsePath(char* path, char* devicename) {
   return crubase;
 }
 
-void handleDir() {
+char* parsePathParam(struct DeviceServiceRoutine** dsr) {
   char* path = strtok(0, " ");  
-  struct DeviceServiceRoutine* dsr = currentDsr;
+  *dsr = currentDsr;
   if (path == 0) {
     path = currentPath;
   } else {
     char devicename[8];
     int crubase = parsePath(path, devicename);
-    dsr = findDsr(devicename, crubase);
-    if (dsr == 0) {
+    *dsr = findDsr(devicename, crubase);
+    if (*dsr == 0) {
       cprintf("device not found.\n");
-      return;
+      return 0;
     }
     if (crubase != 0) {
       path = strtok(path, ".");
       path = strtok(0, " ");
     }
   }
+  return path;
+}
 
+void handleDir() {
+  struct DeviceServiceRoutine* dsr = 0;
+  char* path = parsePathParam(&dsr);
+  if (path == 0 || dsr == 0) {
+    return;
+  }
   if (path[strlen(path)-1] != '.') {
     strcat(path, ".");
   }
