@@ -16,6 +16,9 @@
 
 #define TIPIMAN_VER "1"
 
+#define OPTIONAL 0
+#define REQUIRED 1
+
 const char* const ftypes[] = {
   "D/F",
   "D/V",
@@ -102,8 +105,9 @@ void handleCommand(char *buffer) {
 
 void handleCd() {
   struct DeviceServiceRoutine* dsr = 0;
-  char* path = parsePathParam(&dsr);
+  char* path = parsePathParam(&dsr, REQUIRED);
   if (path == 0 || dsr == 0) {
+    cprintf("help: cd <path>\n  path: drive or directory\n");
     return;
   }
   if (path[strlen(path)-1] != '.') {
@@ -172,10 +176,13 @@ int parsePath(char* path, char* devicename) {
   return crubase;
 }
 
-char* parsePathParam(struct DeviceServiceRoutine** dsr) {
+char* parsePathParam(struct DeviceServiceRoutine** dsr, int required) {
   char* path = strtok(0, " ");  
   *dsr = currentDsr;
   if (path == 0) {
+    if (required) {
+      return 0;
+    }
     path = currentPath;
   } else {
     char devicename[8];
@@ -195,7 +202,7 @@ char* parsePathParam(struct DeviceServiceRoutine** dsr) {
 
 void handleDir() {
   struct DeviceServiceRoutine* dsr = 0;
-  char* path = parsePathParam(&dsr);
+  char* path = parsePathParam(&dsr, OPTIONAL);
   if (path == 0 || dsr == 0) {
     return;
   }

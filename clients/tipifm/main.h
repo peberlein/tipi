@@ -16,6 +16,6 @@ void handleQuit();
 void handleVer();
 
 int parsePath(char* path, char* devicename);
-char* parsePathParam(struct DeviceServiceRoutine** dsr);
+char* parsePathParam(struct DeviceServiceRoutine** dsr, int required);
 
 #endif
