@@ -200,3 +200,47 @@ char* strcat(char* dest, char* add) {
   *s = 0;
   return dest;
 }
+
+char* strncpy(char* dest, char* src, int limit) {
+  int i = 0;
+  while(src[i] != 0 && i < (limit -1)) {
+    dest[i] = src[i];
+    i++;
+  }
+  dest[i] = 0;
+  return dest;
+}
+
+int htoi(char* s) {
+  int old;
+  int out = 0;
+  int neg = 0;
+
+  // skip whitespace
+  while ((*s <= ' ') && (*s != '\0')) ++s;
+
+  if (*s == '-') {
+    ++s;
+    neg = 1;
+  }
+  if (*s == '+') ++s;
+
+  // check whole digits
+  while (((*s >= '0') && (*s <= '9')) || ((*s >= 'A') && (*s <= 'F'))) {
+    old = out;
+    out *= 16;
+    if (*s >= 'A') {
+      out += (*s)-'A' + 10;
+    } else {
+      out += (*s)-'0';
+    }
+    ++s;
+    if (out < old) {
+      // too big, wrapped around
+      return 0;
+    }
+  }
+
+  if (neg) out = 0-out;
+  return out;
+}

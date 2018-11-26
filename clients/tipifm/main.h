@@ -14,4 +14,6 @@ void handleWidth();
 void handleQuit();
 void handleVer();
 
+int parsePath(char* path, char* devicename);
+
 #endif

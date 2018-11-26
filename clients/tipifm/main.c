@@ -120,19 +120,44 @@ void onVolInfo(struct VolInfo* volInfo) {
 void onDirEntry(struct DirEntry* dirEntry) {
   cprintf("%s", dirEntry->name);
   gotoxy(11,23);
-  cprintf("%s %d\n", ftypes[dirEntry->type - 1], dirEntry->reclen);
+  cprintf(ftypes[dirEntry->type - 1]);
+  if (dirEntry->reclen != 0) {
+    cprintf(" %d", dirEntry->reclen);
+  }
+  cprintf("\n");
 }
- 
+
+int parsePath(char* path, char* devicename) {
+  char workbuf[14];
+  int crubase = 0;
+  strncpy(workbuf, path, 14);
+  char* tok = strtok(workbuf, ". ");
+  if (tok != 0 && tok[0] == '1' && strlen(tok) == 4) {
+    crubase = htoi(tok);
+    tok = strtok(0, ". ");
+    strcpy(devicename, tok);
+  } else {
+    strcpy(devicename, tok);
+  }
+  return crubase;
+}
+
 void handleDir() {
-  char* path = strtok(0, " ");
+  char* path = strtok(0, " ");  
   struct DeviceServiceRoutine* dsr = currentDsr;
   if (path == 0) {
     path = currentPath;
   } else {
-    dsr = findDsr(path);
+    char devicename[8];
+    int crubase = parsePath(path, devicename);
+    dsr = findDsr(devicename, crubase);
     if (dsr == 0) {
-      cprintf("error: no device found");
+      cprintf("device not found.\n");
       return;
+    }
+    if (crubase != 0) {
+      path = strtok(path, ".");
+      path = strtok(0, " ");
     }
   }
 

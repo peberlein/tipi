@@ -12,5 +12,7 @@ char* strchr(char* str, int delim);
 int strcspn(char* string, char* chars);
 void strset(char* buffer, char value, int limit);
 char* strcat(char* dst, char* add);
+char* strncpy(char* dest, char* src, int limit);
+int htoi(char* s);
 
 #endif

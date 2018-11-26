@@ -235,14 +235,21 @@ unsigned char callLevel3(struct DeviceServiceRoutine* dsr, struct PAB* pab, unsi
 	return GET_ERROR(vdpreadchar(status));
 }
 
-struct DeviceServiceRoutine* findDsr(char* path) {
-  char* devicename = strtok(path, ".");
+struct DeviceServiceRoutine* findDsr(char* devicename, int crubase) {
   int i = 0;
-  while(dsrList[i].name[0] != 0 && 0 != strcmp(dsrList[i].name, devicename)) {
+
+  while(dsrList[i].name[0] != 0) {
+    if (crubase != 0) {
+      if (dsrList[i].crubase == crubase && 0 == strcmp(dsrList[i].name, devicename)) {
+        return &dsrList[i];
+      }
+    } else {
+      if (0 == strcmp(dsrList[i].name, devicename)) {
+        return &dsrList[i];
+      }
+    }
     i++;
   }
-  if (dsrList[i].name[0] == 0) {
-    return 0;
-  }
-  return &dsrList[i];
+
+  return 0;
 }
