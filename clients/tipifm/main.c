@@ -28,9 +28,13 @@ const char* const ftypes[] = {
 char buffer[256];
 struct DeviceServiceRoutine* currentDsr;
 char currentPath[256];
+int displayWidth;
+int column;
 
 void initGlobals() {
   buffer[0] = 0;
+  displayWidth = 40;
+  column = 0;
 }
 
 void sleep(int jiffies) {
@@ -42,8 +46,10 @@ void sleep(int jiffies) {
 void setupScreen(int width) {
   if (width == 80) {
     set_text80();
+    displayWidth = 80;
   } else if(width == 40) {
     set_text();
+    displayWidth = 40;
   }
 
   defineChars();
@@ -70,6 +76,7 @@ void main()
   strcat(currentPath, ".");
 
   while(1) {
+    VDP_INT_POLL;
     strset(buffer, 0, 255);
     cprintf("\n[%x.%s]\n$ ", currentDsr->crubase, currentPath);
     getstr(2, 23, buffer, 255);
@@ -113,18 +120,26 @@ void handleDrives() {
   cprintf("\n");
 }
 
+
+
 void onVolInfo(struct VolInfo* volInfo) {
   cprintf("Vol: %s\n", volInfo->volname);
+  column = 0;
 }
 
 void onDirEntry(struct DirEntry* dirEntry) {
+  gotoxy(column,23);
   cprintf("%s", dirEntry->name);
-  gotoxy(11,23);
+  gotoxy(column + 11,23);
   cprintf(ftypes[dirEntry->type - 1]);
   if (dirEntry->reclen != 0) {
     cprintf(" %d", dirEntry->reclen);
   }
-  cprintf("\n");
+  column += 20;
+  if (column == displayWidth) {
+    cprintf("\n");
+    column = 0;
+  }
 }
 
 int parsePath(char* path, char* devicename) {
@@ -165,6 +180,8 @@ void handleDir() {
     strcat(path, ".");
   }
   loadDir(dsr, path, onVolInfo, onDirEntry);
+  column = 0;
+  cprintf("\n");
 }
 
 void handleWidth() {
