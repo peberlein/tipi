@@ -119,6 +119,17 @@ int indexof(const char* str, char c) {
   return -1;
 }
 
+int lindexof(const char* str, char c, int start) {
+  int i = start;
+  while(i != -1) {
+    if (str[i] == c) {
+      return i;
+    }
+    i--;
+  }
+  return -1;
+}
+
 int basic_strcmp(const char* basstr, const char* cstr) {
   int i = 0;
   do {

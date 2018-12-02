@@ -60,19 +60,24 @@ unsigned char dsr_open(struct DeviceServiceRoutine* dsr, struct PAB* pab, const 
 unsigned char dsr_close(struct DeviceServiceRoutine* dsr, struct PAB* pab);
 unsigned char dsr_read(struct DeviceServiceRoutine* dsr, struct PAB* pab, int recordNumber);
 unsigned char dsr_write(struct DeviceServiceRoutine* dsr, struct PAB* pab, unsigned char* record);
+unsigned char dsr_status(struct DeviceServiceRoutine* dsr, struct PAB* pab);
 
 typedef void (*vol_entry_cb)(struct VolInfo*);
 typedef void (*dir_entry_cb)(struct DirEntry*);
 
 unsigned char loadDir(struct DeviceServiceRoutine* dsr, const char* pathname, vol_entry_cb vol_cb, dir_entry_cb dir_cb);
+unsigned char status(struct DeviceServiceRoutine* dsr, const char* pathname, int vdpbuffer);
 
 void loadDriveDSRs();
 
 void enableROM(int crubase);
 void disableROM(int crubase);
-int isDrive(char *basicstr);
+int isDrive(char* basicstr);
+
 unsigned char callLevel3(struct DeviceServiceRoutine* dsr, struct PAB* pab, unsigned int vdp);
 
 struct DeviceServiceRoutine* findDsr(char* devicename, int crubase);
+
+void initPab(struct PAB* pab);
 
 #endif

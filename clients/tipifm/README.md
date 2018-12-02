@@ -26,6 +26,26 @@ $ cd 1100.DSK2.
 $
 ```
 
+Example: Change to parent folder
+
+```
+[1000.TIPI.GAMES.]
+$ cd ..
+
+[1000.TIPI.]
+$
+```
+
+Example: Change into folder under current folder
+
+```
+[1000.TIPI.]
+$ cd GAMES
+
+[1000.TIPI.GAMES.]
+$
+```
+
 ## dir
 
 List files in current directory or given directory

@@ -16,6 +16,11 @@ void handleQuit();
 void handleVer();
 
 int parsePath(char* path, char* devicename);
-char* parsePathParam(struct DeviceServiceRoutine** dsr, int required);
+void parsePathParam(struct DeviceServiceRoutine** dsr, char* buffer, int requirements);
+
+#define REQ_DEFAULT 0x8000
+#define REQ_EXISTS 0x0800
+#define REQ_FOLDER 0x0400
+#define REQ_FILE   0x0200
 
 #endif

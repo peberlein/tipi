@@ -7,6 +7,20 @@
 
 struct DeviceServiceRoutine dsrList[40];
 
+unsigned char status(struct DeviceServiceRoutine* dsr, const char* pathname, int vdpbuffer) {
+  struct PAB pab;
+  initPab(&pab);
+  pab.pName = pathname;
+  pab.VDPBuffer = vdpbuffer;
+
+  unsigned char ferr = dsr_status(dsr, &pab);
+  if (ferr != DSR_ERR_NONE) {
+    return 0;
+  }
+
+  return pab.Status;
+}
+
 unsigned char loadDir(struct DeviceServiceRoutine* dsr, const char* pathname, vol_entry_cb vol_cb, dir_entry_cb dir_cb) {
   struct PAB pab;
   
@@ -15,8 +29,6 @@ unsigned char loadDir(struct DeviceServiceRoutine* dsr, const char* pathname, vo
 
   unsigned char ferr = dsr_open(dsr, &pab, pathname, FBUF, DSR_TYPE_INPUT | DSR_TYPE_INTERNAL | DSR_TYPE_SEQUENTIAL, 38);
   if (ferr) {
-    cputsxy(40,23,"open-err ");
-    cputs(int2str(ferr));
     return ferr;
   }
 
@@ -34,6 +46,9 @@ unsigned char loadDir(struct DeviceServiceRoutine* dsr, const char* pathname, vo
         vol_cb(&volInfo);
       } else {
         int namlen = basicToCstr(cbuf, dirEntry.name);
+        if (namlen == 0) {
+          break;
+        }
         int a = ti_floatToInt(cbuf+1+namlen);
         int j = ti_floatToInt(cbuf+10+namlen);
         int k = ti_floatToInt(cbuf+19+namlen);
@@ -45,6 +60,8 @@ unsigned char loadDir(struct DeviceServiceRoutine* dsr, const char* pathname, vo
         }
       }
       recNo++;
+    } else {
+      break;
     }
   }
 
@@ -101,19 +118,12 @@ unsigned char dsr_read(struct DeviceServiceRoutine* dsr, struct PAB* pab, int re
   return result;
 }
 
-/*
-int catRecordHandler(char* buf, struct DirEntry* entry) {
-  int namlen = basicToCstr(buf, entry->name);
-  int a = ti_floatToInt(buf+1+namlen);
-  int j = ti_floatToInt(buf+10+namlen);
-  int k = ti_floatToInt(buf+19+namlen);
-  entry->type = a;
-  entry->sectors = j;
-  entry->reclen = k;
-  entry_row++;
-  return 0;
+unsigned char dsr_status(struct DeviceServiceRoutine* dsr, struct PAB* pab) {
+  pab->OpCode = DSR_STATUS;
+
+  unsigned char result = callLevel3(dsr, pab, VPAB);
+  return result;
 }
-*/
 
 void loadDriveDSRs() {
   struct DeviceServiceRoutine* listHead = dsrList;
@@ -164,7 +174,7 @@ void disableROM(int crubase) {
   __asm__("mov %0,r12\n\tsbz 0" : : "r"(crubase) : "r12");
 }
 
-void invokeLevel3(struct DeviceServiceRoutine* dsr, char* devicename) {
+void invokeLevel3(struct DeviceServiceRoutine* dsr) {
   unsigned int routine = dsr->addr;
 
   if (routine != 0) {
@@ -179,7 +189,6 @@ void invokeLevel3(struct DeviceServiceRoutine* dsr, char* devicename) {
     disableROM(dsr->crubase);
   }
 }
-
 
 #define DSR_NAME_LEN	*((volatile unsigned int*)0x8354)
 
@@ -202,7 +211,7 @@ unsigned char callLevel3(struct DeviceServiceRoutine* dsr, struct PAB* pab, unsi
 	}
 
 	unsigned char buf[8];	// 8 bytes of memory for a name buffer
-	unsigned int status = vdp + 1;
+	unsigned int status = vdp + 1; // address of status byte
 
 	vdp+=9;
 	DSR_PAB_POINTER = vdp;
@@ -229,7 +238,7 @@ unsigned char callLevel3(struct DeviceServiceRoutine* dsr, struct PAB* pab, unsi
 	DSR_PAB_POINTER += cnt;
 
   // Jedimatt42: Now call the stored routine from dsrList 
-  invokeLevel3(dsr, buf);
+  invokeLevel3(dsr);
 
 	// now return the result
 	return GET_ERROR(vdpreadchar(status));

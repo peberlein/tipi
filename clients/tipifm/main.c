@@ -48,11 +48,11 @@ void sleep(int jiffies) {
 
 void setupScreen(int width) {
   if (width == 80) {
-    set_text80();
     displayWidth = 80;
+    set_text80();
   } else if(width == 40) {
-    set_text();
     displayWidth = 40;
+    set_text();
   }
 
   defineChars();
@@ -105,8 +105,9 @@ void handleCommand(char *buffer) {
 
 void handleCd() {
   struct DeviceServiceRoutine* dsr = 0;
-  char* path = parsePathParam(&dsr, REQUIRED);
-  if (path == 0 || dsr == 0) {
+  char path[256];
+  parsePathParam(&dsr, path, REQUIRED);
+  if (dsr == 0) {
     cprintf("help: cd <path>\n  path: drive or directory\n");
     return;
   }
@@ -125,18 +126,17 @@ void handleVer() {
 void handleDrives() {
   int i = 0;
   int cb = 0;
+  
   while(dsrList[i].name[0] != 0) {
-    if (cb != dsrList[i].crubase) {
-      if (cb == 0) {
-        cprintf("\n");
-      }
-      cb = dsrList[i].crubase;
-      cprintf("%x -", cb);
+    cb = dsrList[i].crubase;
+    cprintf("%x -", cb);
+    while (cb == dsrList[i].crubase) {
+      cprintf(" %s", dsrList[i].name);
+      i++;
     }
-    cprintf(" %s", dsrList[i].name);
     i++;
+    cprintf("\n");
   }
-  cprintf("\n");
 }
 
 
@@ -176,34 +176,59 @@ int parsePath(char* path, char* devicename) {
   return crubase;
 }
 
-char* parsePathParam(struct DeviceServiceRoutine** dsr, int required) {
-  char* path = strtok(0, " ");  
+void parsePathParam(struct DeviceServiceRoutine** dsr, char* buffer, int requirements) {
+  buffer[0] = 0; // null terminate so later we can tell if it is prepared or not.
+  char* path = strtok(0, " ");
   *dsr = currentDsr;
   if (path == 0) {
-    if (required) {
-      return 0;
+    if (requirements & REQ_DEFAULT == 0) {
+      *dsr = 0;
+      return;
     }
     path = currentPath;
   } else {
     char devicename[8];
-    int crubase = parsePath(path, devicename);
-    *dsr = findDsr(devicename, crubase);
-    if (*dsr == 0) {
-      cprintf("device not found.\n");
-      return 0;
-    }
-    if (crubase != 0) {
-      path = strtok(path, ".");
-      path = strtok(0, " ");
+    if (0 == strcmp("..", path)) {
+      int ldot = lindexof(currentPath, '.', strlen(currentPath) - 2);
+      if (ldot == -1) {
+        *dsr = 0;
+        cprintf("No parent folder\n");
+        return;
+      }
+      strncpy(buffer, currentPath, ldot + 1);
+      return;
+    } else {
+      int crubase = parsePath(path, devicename);
+      *dsr = findDsr(devicename, crubase);
+      if (*dsr == 0) {
+        // not a base device, so try subdir
+        strcpy(buffer, currentPath);
+        strcat(buffer, path);
+        crubase = parsePath(buffer, devicename);
+        *dsr = findDsr(devicename, crubase);
+        // if still not found, then give up.
+        if (*dsr == 0) {  
+          cprintf("device not found.\n");
+          return;
+        }
+      }
+      if (crubase != 0) {
+        path = strtok(path, ".");
+        path = strtok(0, " ");
+      }
     }
   }
-  return path;
+  // Todo: test for existance and matching requirements
+  if (buffer[0] == 0) {
+    strcpy(buffer, path);
+  }
 }
 
 void handleDir() {
   struct DeviceServiceRoutine* dsr = 0;
-  char* path = parsePathParam(&dsr, OPTIONAL);
-  if (path == 0 || dsr == 0) {
+  char path[256];
+  parsePathParam(&dsr, path, OPTIONAL);
+  if (dsr == 0) {
     return;
   }
   if (path[strlen(path)-1] != '.') {
@@ -216,10 +241,10 @@ void handleDir() {
 
 void handleWidth() {
   char* tok = strtok(0, " ");
-  if (MATCH(tok, "80")) {
-    setupScreen(80);
-  } else if (MATCH(tok, "40")) {
-    setupScreen(40);
+  int width = atoi(tok);
+
+  if (width == 40 || width == 80) {
+    setupScreen(width);
   } else {
     cprintf("help: width n\n  n: 80|40\n");
   }
