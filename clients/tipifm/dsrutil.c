@@ -11,7 +11,7 @@ struct DeviceServiceRoutine dsrList[40];
 unsigned char status(struct DeviceServiceRoutine* dsr, const char* pathname, int vdpbuffer) {
   struct PAB pab;
   initPab(&pab);
-  pab.pName = pathname;
+  pab.pName = (char*)pathname;
   pab.VDPBuffer = vdpbuffer;
 
   unsigned char ferr = dsr_status(dsr, &pab);
