@@ -46,10 +46,26 @@ void sleep(int jiffies) {
   }
 }
 
+int isF18A() {
+  unlock_f18a();
+  unsigned char testcode[6] = { 0x04, 0xE0, 0x3F, 0x00, 0x03, 0x40 };
+  vdpmemcpy(0x3F00, testcode, 6);
+  VDP_SET_REGISTER(0x36, 0x3F);
+  VDP_SET_REGISTER(0x37, 0x00);
+  return !vdpreadchar(0x3F00);
+}
+
+void resetF18A() {
+  lock_f18a();
+  set_graphics(0); // just to reset EVERYTHING
+}
+
 void setupScreen(int width) {
+  resetF18A();
   if (width == 80) {
     displayWidth = 80;
-    set_text80();
+    bgcolor(COLOR_CYAN); // set background color before going into cell-attribute color mode so border is set.
+    set_text80_color();
   } else if(width == 40) {
     displayWidth = 40;
     set_text();
@@ -71,7 +87,7 @@ void titleScreen() {
 void main()
 {
   initGlobals();
-  setupScreen(40);
+  setupScreen(isF18A() ? 80 : 40);
   titleScreen();
   loadDriveDSRs();
   currentDsr = dsrList;
@@ -251,5 +267,6 @@ void handleWidth() {
 }
 
 void handleQuit() {
+  resetF18A();
   exit();
 }

@@ -3,6 +3,7 @@
 
 void initGlobals();
 void setupScreen(int width);
+void resetF18A();
 void titleScreen();
 void main();
 void sleep(int jiffies);
