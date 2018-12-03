@@ -45,6 +45,8 @@ void __attribute__((noinline)) mds_dsrlnkraw(int crubase, unsigned int vdp) {
 	// needs to be wrapped with LWPI....
 	__asm__(
 	"	mov %1,@>83F8		; prepare GPLWS r12 with crubase\n"
+	"	mov %1,r12		; prepare terminate crubase to end loop\n"
+	"	ai r12,0x0200\n"
 	"	ai r10,-34		; make stack room to save workspace & zero word\n"
 	"	lwpi 0x83e0		; get gplws\n"
 	"	li r0,0x8300		; source wp for backup\n"
@@ -59,12 +61,12 @@ void __attribute__((noinline)) mds_dsrlnkraw(int crubase, unsigned int vdp) {
 	"a2310  sbz  0			; card off\n"
 	"a2316  ai   r12,0x0100		; next card (>1000 for first)\n"
 	"       clr  @0x83d0		; clear cru tracking at >83d0\n"
-	"       ci   r12,0x2000		; check if all cards are done\n"
+	"       c    r12,@>8318		; check if all cards are done\n"
 	"       jeq  a2388		; if yes, we didn't find it, so error out\n"
 	"       mov  r12,@0x83d0	; save cru base\n"
 	"       sbo  0			; card on\n"
 	"       li   r2,0x4000		; read card header bytes\n"
-	"       cb   *r2,@dsrdat	; >aa = header\n"
+	"       cb   *r2,@dsrdat	; >aa == header ?\n"
 	"       jne  a2310		; no: loop back for next card\n"
 	"       ai   r2,8            	; offset (contains the data statement, so 8 for a device, for >4008)\n"
 	"       jmp  a2340		; always jump into the loop from here\n"
@@ -98,6 +100,7 @@ void __attribute__((noinline)) mds_dsrlnkraw(int crubase, unsigned int vdp) {
 	"	ai r10,34		; restore stack\n"
 		:
 		: "i" (buf), "r" (crubase-0x0100)
+		: "r12"
 	);
 
 }
