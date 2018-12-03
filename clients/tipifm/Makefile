@@ -16,6 +16,8 @@ OBJECT_LIST=\
   crt0.o\
   initdata.o\
   dsrutil.o\
+  mds_dsrlnk.o\
+  mds_dsrlnkraw.o\
   strutil.o\
   tifloat.o\
   oem.o\

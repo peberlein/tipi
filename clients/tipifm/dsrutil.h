@@ -74,8 +74,6 @@ void enableROM(int crubase);
 void disableROM(int crubase);
 int isDrive(char* basicstr);
 
-unsigned char callLevel3(struct DeviceServiceRoutine* dsr, struct PAB* pab, unsigned int vdp);
-
 struct DeviceServiceRoutine* findDsr(char* devicename, int crubase);
 
 void initPab(struct PAB* pab);

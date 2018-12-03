@@ -1,4 +1,5 @@
 #include "dsrutil.h"
+#include "mds_dsrlnk.h"
 
 #include <conio.h>
 #include "strutil.h"
@@ -42,6 +43,10 @@ unsigned char loadDir(struct DeviceServiceRoutine* dsr, const char* pathname, vo
       vdpmemread(FBUF, cbuf, pab.CharCount);
       // process Record
       if (recNo == 0) {
+        if (cbuf[0] == 0) {
+          cprintf("no device\n");
+          return 0;
+        }
         basicToCstr(cbuf, volInfo.volname);
         vol_cb(&volInfo);
       } else {
@@ -96,13 +101,13 @@ unsigned char dsr_open(struct DeviceServiceRoutine* dsr, struct PAB* pab, const 
   pab->pName = (char*)fname;
   pab->VDPBuffer = vdpbuffer;
 
-  return callLevel3(dsr, pab, VPAB);
+  return mds_dsrlnk(dsr->crubase, pab, VPAB);
 }
 
 unsigned char dsr_close(struct DeviceServiceRoutine* dsr, struct PAB* pab) {
   pab->OpCode = DSR_CLOSE;
 
-  return callLevel3(dsr, pab, VPAB);
+  return mds_dsrlnk(dsr->crubase, pab, VPAB);
 }
 
 // the data read is in FBUF, the length read in pab->CharCount
@@ -113,7 +118,7 @@ unsigned char dsr_read(struct DeviceServiceRoutine* dsr, struct PAB* pab, int re
   pab->RecordNumber = recordNumber;
   pab->CharCount = 0;
 
-  unsigned char result = callLevel3(dsr, pab, VPAB);
+  unsigned char result = mds_dsrlnk(dsr->crubase, pab, VPAB);
   vdpmemread(VPAB + 5, (&pab->CharCount), 1);
   return result;
 }
@@ -121,7 +126,7 @@ unsigned char dsr_read(struct DeviceServiceRoutine* dsr, struct PAB* pab, int re
 unsigned char dsr_status(struct DeviceServiceRoutine* dsr, struct PAB* pab) {
   pab->OpCode = DSR_STATUS;
 
-  unsigned char result = callLevel3(dsr, pab, VPAB);
+  unsigned char result = mds_dsrlnk(dsr->crubase, pab, VPAB);
   return result;
 }
 
@@ -138,7 +143,6 @@ void loadDriveDSRs() {
 
       while(dsrlinks != 0) {
         
-        unsigned char* dsrname = (unsigned char*) (dsrlinks + 2);
         if (isDrive(dsrlinks->name)) {
           basicToCstr(dsrlinks->name, listHead->name);
           listHead->crubase = cruscan;
@@ -172,76 +176,6 @@ void enableROM(int crubase) {
 
 void disableROM(int crubase) {
   __asm__("mov %0,r12\n\tsbz 0" : : "r"(crubase) : "r12");
-}
-
-void invokeLevel3(struct DeviceServiceRoutine* dsr) {
-  unsigned int routine = dsr->addr;
-
-  if (routine != 0) {
-    enableROM(dsr->crubase);
-    __asm__("mov %0,@>83F2\n\t"
-            "lwpi >83E0\n\t"
-            "bl *r9\n\t"
-            "nop\n\t"
-            "lwpi >8300"
-            : : "r"(routine) : "r9"
-    );
-    disableROM(dsr->crubase);
-  }
-}
-
-#define DSR_NAME_LEN	*((volatile unsigned int*)0x8354)
-
-unsigned char callLevel3(struct DeviceServiceRoutine* dsr, struct PAB* pab, unsigned int vdp) {
-  //--- borrowed from Tursi's dsrlnk
-	if (pab->NameLength == 0) {
-		pab->NameLength = strlen(pab->pName);
-	}
-
-	// copies your PAB to VDP and then executes the call
-	vdpmemcpy(vdp, (const unsigned char*)pab, 9);
-	// assumes vdpmemcpy leaves the VDP address in the right place!
-	VDPWD = pab->NameLength;
-
-	// and the filename itself after pab in vdp - note we assume 'x' is valid!
-	unsigned char *p = pab->pName;
-  int x = pab->NameLength;
-	while (x--) {
-		VDPWD = *(p++);
-	}
-
-	unsigned char buf[8];	// 8 bytes of memory for a name buffer
-	unsigned int status = vdp + 1; // address of status byte
-
-	vdp+=9;
-	DSR_PAB_POINTER = vdp;
-
-	unsigned char size = vdpreadchar(vdp);
-	unsigned char cnt=0;
-	while (cnt < 8) {
-		buf[cnt] = VDPRD;	// still in the right place after the readchar above got the length
-		if (buf[cnt] == '.') {
-      // Jedimatt42: turn buf into a cstring
-      buf[cnt] = 0;
-			break;
-		}
-		cnt++;
-	}
-	if ((cnt == 0) || (cnt > 7)) {
-		// illegal device name length
-		vdpchar(status, DSR_ERR_FILEERROR);
-		return GET_ERROR(vdpreadchar(status));
-	}
-	// save off the device name length (asm below uses it!)
-	DSR_NAME_LEN = cnt;
-	++cnt;
-	DSR_PAB_POINTER += cnt;
-
-  // Jedimatt42: Now call the stored routine from dsrList 
-  invokeLevel3(dsr);
-
-	// now return the result
-	return GET_ERROR(vdpreadchar(status));
 }
 
 struct DeviceServiceRoutine* findDsr(char* devicename, int crubase) {

@@ -99,6 +99,7 @@ void handleCommand(char *buffer) {
   else COMMAND("drives", handleDrives)
   else COMMAND("width", handleWidth)
   else COMMAND("quit", handleQuit)
+  else COMMAND("exit", handleQuit)
   else COMMAND("ver", handleVer)
   else cprintf("unknown command: %s\n", tok);
 }
@@ -134,7 +135,6 @@ void handleDrives() {
       cprintf(" %s", dsrList[i].name);
       i++;
     }
-    i++;
     cprintf("\n");
   }
 }
