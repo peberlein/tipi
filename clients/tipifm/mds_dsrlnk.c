@@ -4,6 +4,7 @@
 #include "files.h"
 #include "vdp.h"
 #include "string.h"
+#include "mds_dsrlnk.h"
 
 // NOTE: because this does not return the entire PAB back to you,
 // if you need data from the DSR other than the error byte
