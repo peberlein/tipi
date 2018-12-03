@@ -8,11 +8,10 @@
 
 struct DeviceServiceRoutine dsrList[40];
 
-unsigned char status(struct DeviceServiceRoutine* dsr, const char* pathname, int vdpbuffer) {
+unsigned char status(struct DeviceServiceRoutine* dsr, const char* pathname) {
   struct PAB pab;
   initPab(&pab);
   pab.pName = (char*)pathname;
-  pab.VDPBuffer = vdpbuffer;
 
   unsigned char ferr = dsr_status(dsr, &pab);
   if (ferr != DSR_ERR_NONE) {
@@ -28,7 +27,7 @@ unsigned char loadDir(struct DeviceServiceRoutine* dsr, const char* pathname, vo
   struct VolInfo volInfo;
   struct DirEntry dirEntry;
 
-  unsigned char ferr = dsr_open(dsr, &pab, pathname, FBUF, DSR_TYPE_INPUT | DSR_TYPE_INTERNAL | DSR_TYPE_SEQUENTIAL, 38);
+  unsigned char ferr = dsr_open(dsr, &pab, pathname, DSR_TYPE_INPUT | DSR_TYPE_INTERNAL | DSR_TYPE_SEQUENTIAL, 38);
   if (ferr) {
     return ferr;
   }
@@ -87,9 +86,10 @@ void initPab(struct PAB* pab) {
   pab->ScreenOffset = 0;
   pab->NameLength = 0;
   pab->CharCount = 0;
+  pab->VDPBuffer = FBUF;
 }
 
-unsigned char dsr_open(struct DeviceServiceRoutine* dsr, struct PAB* pab, const char* fname, int vdpbuffer, unsigned char flags, int reclen) {
+unsigned char dsr_open(struct DeviceServiceRoutine* dsr, struct PAB* pab, const char* fname, unsigned char flags, int reclen) {
   initPab(pab);
   pab->OpCode = DSR_OPEN;
   if (flags != 0) {
@@ -99,7 +99,6 @@ unsigned char dsr_open(struct DeviceServiceRoutine* dsr, struct PAB* pab, const 
     pab->RecordLength = reclen;
   }
   pab->pName = (char*)fname;
-  pab->VDPBuffer = vdpbuffer;
 
   return mds_dsrlnk(dsr->crubase, pab, VPAB);
 }
