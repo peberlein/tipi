@@ -44,6 +44,7 @@ void __attribute__((noinline)) mds_dsrlnkraw(int crubase, unsigned int vdp) {
 	// TODO: we could rewrite the rest of this in C, just adding support for SBO, SBZ and the actual call which
 	// needs to be wrapped with LWPI....
 	__asm__(
+	"	mov %1,@>83F8		; prepare GPLWS r12 with crubase\n"
 	"	ai r10,-34		; make stack room to save workspace & zero word\n"
 	"	lwpi 0x83e0		; get gplws\n"
 	"	li r0,0x8300		; source wp for backup\n"
@@ -54,7 +55,6 @@ void __attribute__((noinline)) mds_dsrlnkraw(int crubase, unsigned int vdp) {
 	"	jmp begin\n"
 	"dsrdat data >aa00\n"
 	"begin  clr  r1			; r1=0\n"
-	"	li   r12,0x0f00		; cru base to >0f00 (first card -1)\n"
 	"	jmp  a2316		; skip card off.\n"
 	"a2310  sbz  0			; card off\n"
 	"a2316  ai   r12,0x0100		; next card (>1000 for first)\n"
@@ -97,7 +97,7 @@ void __attribute__((noinline)) mds_dsrlnkraw(int crubase, unsigned int vdp) {
 	"a2388  lwpi 0x8300             ; restore workspace\n"
 	"	ai r10,34		; restore stack\n"
 		:
-		: "i" (buf)
+		: "i" (buf), "r" (crubase-0x0100)
 	);
 
 }
