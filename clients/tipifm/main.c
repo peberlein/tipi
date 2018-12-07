@@ -62,9 +62,10 @@ void resetF18A() {
 
 void setupScreen(int width) {
   resetF18A();
+  bgcolor(COLOR_CYAN);
+  textcolor(COLOR_BLACK);
   if (width == 80) {
     displayWidth = 80;
-    bgcolor(COLOR_CYAN); // set background color before going into cell-attribute color mode so border is set.
     set_text80_color();
   } else if(width == 40) {
     displayWidth = 40;
@@ -72,15 +73,12 @@ void setupScreen(int width) {
   }
 
   defineChars();
-  bgcolor(COLOR_CYAN);
-  textcolor(COLOR_BLACK);
   clrscr();
   gotoxy(0,23);
 }
 
 void titleScreen() {
   cprintf("TIPIFM v%s\n", TIPIMAN_VER);
-  cprintf("File Manager for TIPI\n");
   cprintf("www.jedimatt42.com\n");
 }
 
@@ -131,9 +129,15 @@ void handleCd() {
   if (path[strlen(path)-1] != '.') {
     strcat(path, ".");
   }
-  // TODO: validate
+  unsigned char stat = existsDir(dsr, path);
+  if (stat != 0) {
+    cprintf("error, device/folder not found: %s\n", path);
+    return;
+  }
+  
   currentDsr = dsr;
   strcpy(currentPath, path);
+  
 }
 
 void handleVer() {
@@ -250,6 +254,13 @@ void handleDir() {
   if (path[strlen(path)-1] != '.') {
     strcat(path, ".");
   }
+
+  unsigned char stat = existsDir(dsr, path);
+  if (stat != 0) {
+    cprintf("error, device/folder not found: %s\n", path);
+    return;
+  }
+
   loadDir(dsr, path, onVolInfo, onDirEntry);
   column = 0;
   cprintf("\n");

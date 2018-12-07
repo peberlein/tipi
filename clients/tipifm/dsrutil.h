@@ -66,7 +66,7 @@ typedef void (*vol_entry_cb)(struct VolInfo*);
 typedef void (*dir_entry_cb)(struct DirEntry*);
 
 unsigned char loadDir(struct DeviceServiceRoutine* dsr, const char* pathname, vol_entry_cb vol_cb, dir_entry_cb dir_cb);
-unsigned char status(struct DeviceServiceRoutine* dsr, const char* pathname);
+unsigned char existsDir(struct DeviceServiceRoutine* dsr, const char* pathname);
 
 void loadDriveDSRs();
 

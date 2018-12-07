@@ -6,6 +6,9 @@
 #include "string.h"
 #include "mds_dsrlnk.h"
 
+#define GPLWSR12	*((volatile unsigned int*)0x83F8)
+
+
 // NOTE: because this does not return the entire PAB back to you,
 // if you need data from the DSR other than the error byte
 // (ie: RECORD NUMBER), then you have to get it yourself!
@@ -30,6 +33,11 @@ unsigned char mds_dsrlnk(int crubase, struct PAB *pab, unsigned int vdp) {
 
 	// now we can call it
 	mds_dsrlnkraw(crubase, vdp);
+
+	// if GPLWS(R12) is not crubase, then the dsr skipped the request
+	if (GPLWSR12 != crubase) {
+		return 0xff;
+	}
 
 	// now return the result
 	return GET_ERROR(vdpreadchar(vdp+1));

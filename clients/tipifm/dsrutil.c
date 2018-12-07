@@ -8,17 +8,14 @@
 
 struct DeviceServiceRoutine dsrList[40];
 
-unsigned char status(struct DeviceServiceRoutine* dsr, const char* pathname) {
+unsigned char existsDir(struct DeviceServiceRoutine* dsr, const char* pathname) {
   struct PAB pab;
   initPab(&pab);
-  pab.pName = (char*)pathname;
-
-  unsigned char ferr = dsr_status(dsr, &pab);
-  if (ferr != DSR_ERR_NONE) {
-    return 0;
+  unsigned char open_err = dsr_open(dsr, &pab, pathname, DSR_TYPE_INPUT | DSR_TYPE_INTERNAL | DSR_TYPE_SEQUENTIAL, 38);
+  if (open_err == 0) {
+    dsr_close(dsr, &pab);
   }
-
-  return pab.Status;
+  return open_err;
 }
 
 unsigned char loadDir(struct DeviceServiceRoutine* dsr, const char* pathname, vol_entry_cb vol_cb, dir_entry_cb dir_cb) {
