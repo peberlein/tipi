@@ -32,7 +32,7 @@ unsigned char mds_dsrlnk(int crubase, struct PAB *pab, unsigned int vdp) {
 	}
 
 	// now we can call it
-	mds_dsrlnkraw(crubase, vdp);
+	mds_dsrlnkraw(crubase, vdp, DSR_MODE_LVL3);
 
 	// if GPLWS(R12) is not crubase, then the dsr skipped the request
 	if (GPLWSR12 != crubase) {

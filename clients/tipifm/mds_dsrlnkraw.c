@@ -8,7 +8,7 @@
 
 #define DSR_NAME_LEN	*((volatile unsigned int*)0x8354)
 
-void __attribute__((noinline)) mds_dsrlnkraw(int crubase, unsigned int vdp) {
+void __attribute__((noinline)) mds_dsrlnkraw(int crubase, unsigned int vdp, int mode) {
 	// modified version of the e/a DSRLNK, for data >8 (DSR) only
 	// this one does not modify data in low memory expansion so "boot tracking" there may not work.
 	unsigned char *buf = (unsigned char*)0x8380;	// 8 bytes of memory for a name buffer
@@ -34,7 +34,6 @@ void __attribute__((noinline)) mds_dsrlnkraw(int crubase, unsigned int vdp) {
 	// save off the device name length (asm below uses it!)
 	DSR_LEN_COUNT=cnt;
 
-	unsigned int CRU = 0;
 	DSR_NAME_LEN = cnt;
 	++cnt;
 	DSR_PAB_POINTER += cnt;
@@ -45,7 +44,8 @@ void __attribute__((noinline)) mds_dsrlnkraw(int crubase, unsigned int vdp) {
 	// needs to be wrapped with LWPI....
 	__asm__(
 	"	mov %1,@>83F8		; prepare GPLWS r12 with crubase\n"
-	"	mov %1,r12		; prepare terminate crubase to end loop\n"
+	"	mov %1,r12		; prepare terminate crubase to end loop (this is in C workspace)\n"
+	"	mov %2,r9		; store the list offset in a well known address >8312"
 	"	ai r12,0x0200\n"
 	"	ai r10,-34		; make stack room to save workspace & zero word\n"
 	"	lwpi 0x83e0		; get gplws\n"
@@ -68,7 +68,8 @@ void __attribute__((noinline)) mds_dsrlnkraw(int crubase, unsigned int vdp) {
 	"       li   r2,0x4000		; read card header bytes\n"
 	"       cb   *r2,@dsrdat	; >aa == header ?\n"
 	"       jne  a2310		; no: loop back for next card\n"
-	"       ai   r2,8            	; offset (contains the data statement, so 8 for a device, for >4008)\n"
+	"	mov  @0x8312,r2		; load offset into r2\n"
+	"	ai   r2,0x4000		; add in dsr base address - now we point at dsr list or subroutine list\n"
 	"       jmp  a2340		; always jump into the loop from here\n"
 	"a233a  mov  @0x83d2,r2         ; next sub\n"
 	"       sbo  0                  ; card on (already is, isn't it??)\n"
@@ -99,8 +100,8 @@ void __attribute__((noinline)) mds_dsrlnkraw(int crubase, unsigned int vdp) {
 	"a2388  lwpi 0x8300             ; restore workspace\n"
 	"	ai r10,34		; restore stack\n"
 		:
-		: "i" (buf), "r" (crubase-0x0100)
-		: "r12"
+		: "i" (buf), "r" (crubase-0x0100), "r" (mode)
+		: "r12", "r9"
 	);
 
 }
