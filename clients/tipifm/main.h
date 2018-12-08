@@ -1,6 +1,8 @@
 #ifndef _MAIN_H
 #define _MAIN_H 1
 
+#include "dsrutil.h"
+
 void initGlobals();
 void setupScreen(int width);
 void resetF18A();
@@ -15,6 +17,7 @@ void handleDrives();
 void handleWidth();
 void handleQuit();
 void handleVer();
+void handleHelp();
 
 int parsePath(char* path, char* devicename);
 void parsePathParam(struct DeviceServiceRoutine** dsr, char* buffer, int requirements);

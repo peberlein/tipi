@@ -23,6 +23,7 @@ OBJECT_LIST=\
   oem.o\
   oem_high_chars.o\
   oem_low_chars.o\
+  help.o\
   main.o
 
 all: $(FNAME)

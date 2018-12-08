@@ -111,10 +111,11 @@ void handleCommand(char *buffer) {
   COMMAND("cd", handleCd)
   else COMMAND("dir", handleDir)
   else COMMAND("drives", handleDrives)
-  else COMMAND("width", handleWidth)
-  else COMMAND("quit", handleQuit)
   else COMMAND("exit", handleQuit)
+  else COMMAND("help", handleHelp)
+  else COMMAND("quit", handleQuit)
   else COMMAND("ver", handleVer)
+  else COMMAND("width", handleWidth)
   else cprintf("unknown command: %s\n", tok);
 }
 
@@ -123,7 +124,7 @@ void handleCd() {
   char path[256];
   parsePathParam(&dsr, path, REQUIRED);
   if (dsr == 0) {
-    cprintf("help: cd <path>\n  path: drive or directory\n");
+    cprintf("no path: drive or folder specified\n");
     return;
   }
   if (path[strlen(path)-1] != '.') {
@@ -273,7 +274,7 @@ void handleWidth() {
   if (width == 40 || width == 80) {
     setupScreen(width);
   } else {
-    cprintf("help: width n\n  n: 80|40\n");
+    cprintf("no width specified\n");
   }
 }
 

@@ -100,12 +100,12 @@ int strcmpi(const char* a, const char* b) {
   char ch = lowerchar(a[i]);
   do {
     if (ch == '\0') {
-      return ch - b[i];
+      return ch - lowerchar(b[i]);
     }
     i++;
     ch = lowerchar(a[i]);
-  } while(ch == b[i]);
-  return ch - b[i];
+  } while(ch == lowerchar(b[i]));
+  return ch - lowerchar(b[i]);
 }
 
 int indexof(const char* str, char c) {
