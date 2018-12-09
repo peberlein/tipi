@@ -25,6 +25,11 @@ const char* HELP_DRIVES =
 "\n"
 "syntax: 'drives'\n";
 
+const char* HELP_MKDIR =
+"Create a sub-directory in the current location\n"
+"\n"
+"syntax: 'mkdir' (name)\n";
+
 const char* HELP_EXIT =
 "Exit TIPIFM\n"
 "\n"
@@ -51,6 +56,7 @@ void handleHelp() {
   CMD_HELP("dir",HELP_DIR)
   CMD_HELP("drives",HELP_DRIVES)
   CMD_HELP("exit",HELP_EXIT)
+  CMD_HELP("mkdir",HELP_MKDIR)
   CMD_HELP("quit",HELP_EXIT)
   CMD_HELP("ver",HELP_VER)
   CMD_HELP("width",HELP_WIDTH)

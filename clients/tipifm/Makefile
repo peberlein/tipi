@@ -18,6 +18,7 @@ OBJECT_LIST=\
   dsrutil.o\
   mds_dsrlnk.o\
   mds_dsrlnkraw.o\
+  lvl2.o\
   strutil.o\
   tifloat.o\
   oem.o\

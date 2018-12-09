@@ -97,13 +97,13 @@ unsigned char dsr_open(struct DeviceServiceRoutine* dsr, struct PAB* pab, const 
   }
   pab->pName = (char*)fname;
 
-  return mds_dsrlnk(dsr->crubase, pab, VPAB);
+  return mds_dsrlnk(dsr->crubase, pab, VPAB, DSR_MODE_LVL3);
 }
 
 unsigned char dsr_close(struct DeviceServiceRoutine* dsr, struct PAB* pab) {
   pab->OpCode = DSR_CLOSE;
 
-  return mds_dsrlnk(dsr->crubase, pab, VPAB);
+  return mds_dsrlnk(dsr->crubase, pab, VPAB, DSR_MODE_LVL3);
 }
 
 // the data read is in FBUF, the length read in pab->CharCount
@@ -114,7 +114,7 @@ unsigned char dsr_read(struct DeviceServiceRoutine* dsr, struct PAB* pab, int re
   pab->RecordNumber = recordNumber;
   pab->CharCount = 0;
 
-  unsigned char result = mds_dsrlnk(dsr->crubase, pab, VPAB);
+  unsigned char result = mds_dsrlnk(dsr->crubase, pab, VPAB, DSR_MODE_LVL3);
   vdpmemread(VPAB + 5, (&pab->CharCount), 1);
   return result;
 }
@@ -122,7 +122,7 @@ unsigned char dsr_read(struct DeviceServiceRoutine* dsr, struct PAB* pab, int re
 unsigned char dsr_status(struct DeviceServiceRoutine* dsr, struct PAB* pab) {
   pab->OpCode = DSR_STATUS;
 
-  unsigned char result = mds_dsrlnk(dsr->crubase, pab, VPAB);
+  unsigned char result = mds_dsrlnk(dsr->crubase, pab, VPAB, DSR_MODE_LVL3);
   return result;
 }
 

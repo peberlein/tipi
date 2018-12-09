@@ -255,3 +255,16 @@ int htoi(char* s) {
   if (neg) out = 0-out;
   return out;
 }
+
+void strpad(char* dest, int limit, char pad) {
+  int dopad = 0;
+  for(int i = 0; i < limit; i++) {
+    if (dest[i] == 0) {
+      dopad = 1;
+    }
+    if (dopad) {
+      dest[i] = pad;
+    }
+  }
+  dest[limit] = 0;
+}

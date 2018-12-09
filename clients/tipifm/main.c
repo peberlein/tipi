@@ -1,5 +1,6 @@
 
 #include "dsrutil.h"
+#include "lvl2.h"
 #include "strutil.h"
 #include "oem.h"
 #include "tifloat.h"
@@ -113,6 +114,7 @@ void handleCommand(char *buffer) {
   else COMMAND("drives", handleDrives)
   else COMMAND("exit", handleQuit)
   else COMMAND("help", handleHelp)
+  else COMMAND("mkdir", handleMkdir)
   else COMMAND("quit", handleQuit)
   else COMMAND("ver", handleVer)
   else COMMAND("width", handleWidth)
@@ -138,7 +140,6 @@ void handleCd() {
   
   currentDsr = dsr;
   strcpy(currentPath, path);
-  
 }
 
 void handleVer() {
@@ -265,6 +266,23 @@ void handleDir() {
   loadDir(dsr, path, onVolInfo, onDirEntry);
   column = 0;
   cprintf("\n");
+}
+
+void handleMkdir() {
+  char* dirname = strtok(0, " ");
+  if (dirname == 0) {
+    cprintf("error, must specify a directory name\n");
+    return;
+  }
+
+  char unit = path2unit(currentPath);
+  cprintf("mkdir, unit %d, dirname %s\n", unit, dirname);
+
+  unsigned char err = lvl2_mkdir(currentDsr->crubase, unit, dirname);
+  cprintf("mkdir err: %d\n", err);
+  if (err) {
+    cprintf("cannot create directory %s%s\n", currentPath, dirname);
+  }
 }
 
 void handleWidth() {

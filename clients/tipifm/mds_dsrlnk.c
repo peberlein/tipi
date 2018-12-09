@@ -12,7 +12,7 @@
 // NOTE: because this does not return the entire PAB back to you,
 // if you need data from the DSR other than the error byte
 // (ie: RECORD NUMBER), then you have to get it yourself!
-unsigned char mds_dsrlnk(int crubase, struct PAB *pab, unsigned int vdp) {
+unsigned char mds_dsrlnk(int crubase, struct PAB *pab, unsigned int vdp, int mode) {
 	unsigned char x;
 
 	// copies your PAB to VDP and then executes the call through dsrlnkraw
@@ -32,7 +32,7 @@ unsigned char mds_dsrlnk(int crubase, struct PAB *pab, unsigned int vdp) {
 	}
 
 	// now we can call it
-	mds_dsrlnkraw(crubase, vdp, DSR_MODE_LVL3);
+	mds_dsrlnkraw(crubase, vdp, mode);
 
 	// if GPLWS(R12) is not crubase, then the dsr skipped the request
 	if (GPLWSR12 != crubase) {

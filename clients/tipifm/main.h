@@ -14,6 +14,7 @@ void handleCommand(char * buffer);
 void handleCd();
 void handleDir();
 void handleDrives();
+void handleMkdir();
 void handleWidth();
 void handleQuit();
 void handleVer();
