@@ -69,6 +69,8 @@ unsigned char lvl2_mkdir(int crubase, char unit, char* dirname) {
 
   lvl2_name[1] = 0;
   lvl2_name[0] = LVL2_OP_MKDIR;
+  pab.NameLength = 1;
+  pab.pName = lvl2_name;
 
   LVL2_PARAMADDR1 = FBUF;
   strpad(dirname, 10, ' ');
@@ -76,6 +78,9 @@ unsigned char lvl2_mkdir(int crubase, char unit, char* dirname) {
 
   LVL2_UNIT = unit;
   LVL2_STATUS = 0;
+
+  cprintf("lvl2 pab->pName: %x\n", pab.pName[0]);
+  cprintf("lvl2 plen %d\n", pab.NameLength);
 
   unsigned char ferr = mds_dsrlnk(crubase, &pab, VPAB, DSR_MODE_LVL2);
 

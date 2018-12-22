@@ -17,6 +17,7 @@ void handleDrives();
 void handleMkdir();
 void handleWidth();
 void handleQuit();
+void handleLvl2();
 void handleVer();
 void handleHelp();
 
