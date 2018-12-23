@@ -14,22 +14,6 @@
 #define LVL2_PARAMADDR1 *((volatile unsigned int*)0x834E)
 #define LVL2_PARAMADDR2 *((volatile unsigned int*)0x8350)
 
-#define LVL2_OP_PROTECT 0x12
-#define LVL2_OP_MKDIR 0x18
-
-char lvl2_name[2];
-
-void setPab(struct PAB* pab) {
-  pab->OpCode = 0;
-  pab->Status = 0;
-  pab->RecordLength = 0;
-  pab->RecordNumber = 0;
-  pab->ScreenOffset = 0;
-  pab->NameLength = 0;
-  pab->CharCount = 0;
-  pab->VDPBuffer = FBUF;
-  pab->pName = lvl2_name;
-}
 
 char path2unit(char* currentPath) {
   char drive[9];
@@ -44,34 +28,37 @@ char path2unit(char* currentPath) {
 }
 
 unsigned char lvl2_protect(int crubase, char unit, char* filename, char protect) {
-  struct PAB pab;
-  setPab(&pab);
-
-  lvl2_name[1] = 0;
-  lvl2_name[0] = LVL2_OP_PROTECT;
-
   LVL2_PARAMADDR1 = FBUF;
   strpad(filename, 10, ' ');
   vdpmemcpy(FBUF, filename, 10);
 
   LVL2_UNIT = unit;
   LVL2_STATUS = 0;
-  LVL2_PROTECT = protect;
+  LVL2_PROTECT = protect ? 0xff : 0x00;
 
-  unsigned char ferr = mds_dsrlnk(crubase, &pab, VPAB, DSR_MODE_LVL2);
+  call_lvl2(crubase, LVL2_OP_PROTECT);
 
-  return LVL2_STATUS | ferr;
+  return LVL2_STATUS;
+}
+
+unsigned char lvl2_setdir(int crubase, char unit, char* path) {
+  LVL2_PARAMADDR1 = FBUF;
+  int len = strlen(path);
+  if (len > 39) {
+    return 0xFE;
+  }
+  vdpchar(FBUF,(unsigned char) len);
+  vdpmemcpy(FBUF+1, path, len);
+
+  LVL2_UNIT = unit;
+  LVL2_STATUS = 0;
+
+  call_lvl2(crubase, LVL2_OP_SETDIR);
+
+  return LVL2_STATUS;
 }
 
 unsigned char lvl2_mkdir(int crubase, char unit, char* dirname) {
-  struct PAB pab;
-  setPab(&pab);
-
-  lvl2_name[1] = 0;
-  lvl2_name[0] = LVL2_OP_MKDIR;
-  pab.NameLength = 1;
-  pab.pName = lvl2_name;
-
   LVL2_PARAMADDR1 = FBUF;
   strpad(dirname, 10, ' ');
   vdpmemcpy(FBUF, dirname, 10);
@@ -79,10 +66,45 @@ unsigned char lvl2_mkdir(int crubase, char unit, char* dirname) {
   LVL2_UNIT = unit;
   LVL2_STATUS = 0;
 
-  cprintf("lvl2 pab->pName: %x\n", pab.pName[0]);
-  cprintf("lvl2 plen %d\n", pab.NameLength);
+  call_lvl2(crubase, LVL2_OP_MKDIR);
 
-  unsigned char ferr = mds_dsrlnk(crubase, &pab, VPAB, DSR_MODE_LVL2);
+  return LVL2_STATUS;
+}
 
-  return LVL2_STATUS | ferr;
+unsigned int __attribute__((noinline)) subroutine(int crubase, unsigned char operation) {
+  enableROM(crubase);
+  unsigned int addr = 0;
+  struct DeviceRomHeader* dsrrom = (struct DeviceRomHeader*) 0x4000;
+  struct NameLink* entry = (struct NameLink*) dsrrom->basiclnk;
+  while(entry != 0) {
+    if (entry->name[0] == 1 && entry->name[1] == operation) {
+      addr = entry->routine;
+      break;
+    }
+    entry = entry->next;
+  }
+  disableROM(crubase);
+  return addr;
+}
+
+void __attribute__((noinline)) call_lvl2(int crubase, unsigned char operation) {
+  unsigned int addr = subroutine(crubase, operation);
+  if (addr == 0) {
+    LVL2_STATUS = 0xFF;
+    return;
+  }
+
+  __asm__(
+    	" mov %0,@>83F8		; prepare GPLWS r12 with crubase\n"
+      " mov %1,@>83F2   ; set r9 to subroutine address\n"
+    	"	lwpi 0x83e0     ; get gplws\n"
+      " sbo 0           ; turn on card dsr\n"
+      " bl *r9          ; call rubroutine\n"
+      " nop             ; lvl2 routines never 'skip' request\n"
+      " sbz 0           ; turn off card dsr\n"
+      " lwpi 0x8300     ; assuming gcc workspace is here\n"
+      :
+      : "r" (crubase), "r" (addr)
+      : "r12"
+  );
 }

@@ -110,13 +110,17 @@ void main()
 void handleCommand(char *buffer) {
   char* tok = strtok(buffer, " ");
   COMMAND("cd", handleCd)
+  else COMMAND("delete", handleDelete)
   else COMMAND("dir", handleDir)
   else COMMAND("drives", handleDrives)
-  else COMMAND("exit", handleQuit)
+  else COMMAND("exit", handleExit)
   else COMMAND("help", handleHelp)
-  else COMMAND("mkdir", handleMkdir)
-  else COMMAND("quit", handleQuit)
   else COMMAND("lvl2", handleLvl2)
+  else COMMAND("mkdir", handleMkdir)
+  else COMMAND("protect", handleProtect)
+  else COMMAND("rename", handleRename)
+  else COMMAND("rmdir", handleRmdir)
+  else COMMAND("unprotect", handleUnprotect)
   else COMMAND("ver", handleVer)
   else COMMAND("width", handleWidth)
   else cprintf("unknown command: %s\n", tok);
@@ -299,13 +303,59 @@ void handleMkdir() {
   }
 
   char unit = path2unit(currentPath);
-  cprintf("mkdir, unit %d, dirname %s\n", unit, dirname);
+
+  lvl2_setdir(currentDsr->crubase, unit, currentPath);
 
   unsigned char err = lvl2_mkdir(currentDsr->crubase, unit, dirname);
-  cprintf("mkdir err: %d\n", err);
   if (err) {
     cprintf("cannot create directory %s%s\n", currentPath, dirname);
   }
+}
+
+void handleProtect() {
+  char* filename = strtok(0, " ");
+  if (filename == 0) {
+    cprintf("error, must specify a file name\n");
+    return;
+  }
+
+  char unit = path2unit(currentPath);
+
+  lvl2_setdir(currentDsr->crubase, unit, currentPath);
+
+  unsigned char err = lvl2_protect(currentDsr->crubase, unit, filename, 1);
+  if (err) {
+    cprintf("cannot protect file %s%s\n", currentPath, filename);
+  }
+}
+
+void handleUnprotect() {
+  char* filename = strtok(0, " ");
+  if (filename == 0) {
+    cprintf("error, must specify a file name\n");
+    return;
+  }
+
+  char unit = path2unit(currentPath);
+
+  lvl2_setdir(currentDsr->crubase, unit, currentPath);
+
+  unsigned char err = lvl2_protect(currentDsr->crubase, unit, filename, 0);
+  if (err) {
+    cprintf("cannot unprotect file %s%s\n", currentPath, filename);
+  }
+}
+
+void handleDelete() {
+
+}
+
+void handleRename() {
+
+}
+
+void handleRmdir() {
+
 }
 
 void handleWidth() {
@@ -319,7 +369,7 @@ void handleWidth() {
   }
 }
 
-void handleQuit() {
+void handleExit() {
   resetF18A();
   exit();
 }

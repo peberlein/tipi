@@ -3,7 +3,6 @@
 
 #include "files.h"
 #include "vdp.h"
-#include "conio.h"
 #include "string.h"
 #include "mds_dsrlnk.h"
 
@@ -15,10 +14,6 @@
 // (ie: RECORD NUMBER), then you have to get it yourself!
 unsigned char mds_dsrlnk(int crubase, struct PAB *pab, unsigned int vdp, int mode) {
 	unsigned char x;
-
-	cprintf("pab name: %x\n", pab->pName[0]);
-	cprintf("pab term: %x\n", pab->pName[1]);
-	cprintf("pab nlen: %d\n", pab->NameLength);
 
 	// copies your PAB to VDP and then executes the call through dsrlnkraw
 	vdpmemcpy(vdp, (const unsigned char*)pab, 9);

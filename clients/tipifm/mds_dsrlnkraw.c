@@ -39,7 +39,6 @@ void __attribute__((noinline)) mds_dsrlnkraw(int crubase, unsigned int vdp, int 
 	}
 	// save off the device name length (asm below uses it!)
 	DSR_LEN_COUNT=cnt;	
-	cprintf("cnt %d\n", cnt);
 	DSR_NAME_LEN = cnt;
 	++cnt;
 	DSR_PAB_POINTER += cnt;

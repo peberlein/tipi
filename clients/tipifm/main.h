@@ -4,22 +4,28 @@
 #include "dsrutil.h"
 
 void initGlobals();
-void setupScreen(int width);
-void resetF18A();
-void titleScreen();
 void main();
+void resetF18A();
+void setupScreen(int width);
 void sleep(int jiffies);
+void titleScreen();
+
 void handleCommand(char * buffer);
 
 void handleCd();
+void handleDelete();
 void handleDir();
 void handleDrives();
-void handleMkdir();
-void handleWidth();
-void handleQuit();
-void handleLvl2();
-void handleVer();
+void handleExit();
 void handleHelp();
+void handleLvl2();
+void handleMkdir();
+void handleProtect();
+void handleRename();
+void handleRmdir();
+void handleUnprotect();
+void handleVer();
+void handleWidth();
 
 int parsePath(char* path, char* devicename);
 void parsePathParam(struct DeviceServiceRoutine** dsr, char* buffer, int requirements);
