@@ -71,6 +71,85 @@ unsigned char lvl2_mkdir(int crubase, char unit, char* dirname) {
   return LVL2_STATUS;
 }
 
+unsigned char lvl2_rmdir(int crubase, char unit, char* dirname) {
+  LVL2_PARAMADDR1 = FBUF;
+  strpad(dirname, 10, ' ');
+  vdpmemcpy(FBUF, dirname, 10);
+
+  LVL2_UNIT = unit;
+  LVL2_STATUS = 0;
+
+  call_lvl2(crubase, LVL2_OP_DELDIR);
+
+  return LVL2_STATUS;
+}
+
+unsigned char lvl2_rename(int crubase, char unit, char* oldname, char* newname) {
+  LVL2_PARAMADDR1 = FBUF;
+  LVL2_PARAMADDR2 = FBUF + 10;
+
+  strpad(oldname, 10, ' ');
+  strpad(newname, 10, ' ');
+  vdpmemcpy(LVL2_PARAMADDR1, newname, 10);
+  vdpmemcpy(LVL2_PARAMADDR2, oldname, 10);
+
+  LVL2_UNIT = unit;
+  LVL2_STATUS = 0;
+
+  call_lvl2(crubase, LVL2_OP_RENAME);
+
+  return LVL2_STATUS;
+}
+
+unsigned char lvl2_rendir(int crubase, char unit, char* oldname, char* newname) {
+  LVL2_PARAMADDR1 = FBUF;
+  LVL2_PARAMADDR2 = FBUF + 10;
+
+  strpad(oldname, 10, ' ');
+  strpad(newname, 10, ' ');
+  vdpmemcpy(LVL2_PARAMADDR1, newname, 10);
+  vdpmemcpy(LVL2_PARAMADDR2, oldname, 10);
+
+  LVL2_UNIT = unit;
+  LVL2_STATUS = 0;
+
+  call_lvl2(crubase, LVL2_OP_RENDIR);
+
+  return LVL2_STATUS;
+}
+
+unsigned char lvl2_input(int crubase, char unit, char* filename, unsigned char blockcount, struct AddInfo* addInfoPtr) {
+  LVL2_PARAMADDR1 = FBUF;
+  strpad(filename, 10, ' ');
+  vdpmemcpy(FBUF, filename, 10);
+
+  LVL2_UNIT = unit;
+  LVL2_PROTECT = blockcount;
+  LVL2_STATUS = ((unsigned int) addInfoPtr) - 0x8300;
+
+  addInfoPtr->buffer = FBUF + 10;
+
+  call_lvl2(crubase, LVL2_OP_INPUT);
+
+  return LVL2_STATUS;
+}
+
+unsigned char lvl2_output(int crubase, char unit, char* filename, unsigned char blockcount, struct AddInfo* addInfoPtr) {
+  LVL2_PARAMADDR1 = FBUF;
+  strpad(filename, 10, ' ');
+  vdpmemcpy(FBUF, filename, 10);
+
+  LVL2_UNIT = unit;
+  LVL2_PROTECT = blockcount;
+  LVL2_STATUS = ((unsigned int) addInfoPtr) - 0x8300;
+
+  addInfoPtr->buffer = FBUF + 10;
+
+  call_lvl2(crubase, LVL2_OP_OUTPUT);
+
+  return LVL2_STATUS;
+}
+
 unsigned int __attribute__((noinline)) subroutine(int crubase, unsigned char operation) {
   enableROM(crubase);
   unsigned int addr = 0;
