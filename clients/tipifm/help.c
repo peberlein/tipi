@@ -33,7 +33,7 @@ const char* HELP_DRIVES =
 const char* HELP_EXIT =
 "Exit TIPIFM\n"
 "\n"
-"syntax: 'exist' | 'quit'\n";
+"syntax: 'exit'\n";
 
 const char* HELP_LVL2 =
 "Display Level 2 IO routines for a card\n"
@@ -92,6 +92,7 @@ void handleHelp() {
   CMD_HELP("protect",HELP_PROTECT)
   CMD_HELP("rename",HELP_RENAME)
   CMD_HELP("rmdir",HELP_RMDIR)
+  CMD_HELP("unprotect",HELP_UNPROTECT)
   CMD_HELP("ver",HELP_VER)
   CMD_HELP("width",HELP_WIDTH)
   else cprintf("unknown command: %s\n", tok);
