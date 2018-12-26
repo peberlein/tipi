@@ -28,17 +28,7 @@ char path2unit(char* currentPath) {
 }
 
 unsigned char lvl2_protect(int crubase, char unit, char* filename, char protect) {
-  LVL2_PARAMADDR1 = FBUF;
-  strpad(filename, 10, ' ');
-  vdpmemcpy(FBUF, filename, 10);
-
-  LVL2_UNIT = unit;
-  LVL2_STATUS = 0;
-  LVL2_PROTECT = protect ? 0xff : 0x00;
-
-  call_lvl2(crubase, LVL2_OP_PROTECT);
-
-  return LVL2_STATUS;
+  return base_lvl2(crubase, unit, LVL2_OP_PROTECT, filename, 0, protect ? 0xff : 0x00);
 }
 
 unsigned char lvl2_setdir(int crubase, char unit, char* path) {
@@ -59,66 +49,30 @@ unsigned char lvl2_setdir(int crubase, char unit, char* path) {
 }
 
 unsigned char lvl2_mkdir(int crubase, char unit, char* dirname) {
-  LVL2_PARAMADDR1 = FBUF;
-  strpad(dirname, 10, ' ');
-  vdpmemcpy(FBUF, dirname, 10);
-
-  LVL2_UNIT = unit;
-  LVL2_STATUS = 0;
-
-  call_lvl2(crubase, LVL2_OP_MKDIR);
-
-  return LVL2_STATUS;
+  return base_lvl2(crubase, unit, LVL2_OP_MKDIR, dirname, 0, 0);
 }
 
 unsigned char lvl2_rmdir(int crubase, char unit, char* dirname) {
-  LVL2_PARAMADDR1 = FBUF;
-  strpad(dirname, 10, ' ');
-  vdpmemcpy(FBUF, dirname, 10);
-
-  LVL2_UNIT = unit;
-  LVL2_STATUS = 0;
-
-  call_lvl2(crubase, LVL2_OP_DELDIR);
-
-  return LVL2_STATUS;
+  return base_lvl2(crubase, unit, LVL2_OP_DELDIR, dirname, 0, 0);
 }
 
 unsigned char lvl2_rename(int crubase, char unit, char* oldname, char* newname) {
-  LVL2_PARAMADDR1 = FBUF;
-  LVL2_PARAMADDR2 = FBUF + 10;
-
-  strpad(oldname, 10, ' ');
-  strpad(newname, 10, ' ');
-  vdpmemcpy(LVL2_PARAMADDR1, newname, 10);
-  vdpmemcpy(LVL2_PARAMADDR2, oldname, 10);
-
-  LVL2_UNIT = unit;
-  LVL2_STATUS = 0;
-
-  call_lvl2(crubase, LVL2_OP_RENAME);
-
-  return LVL2_STATUS;
+  return base_lvl2(crubase, unit, LVL2_OP_RENAME, newname, oldname, 0);
 }
 
 unsigned char lvl2_rendir(int crubase, char unit, char* oldname, char* newname) {
-  LVL2_PARAMADDR1 = FBUF;
-  LVL2_PARAMADDR2 = FBUF + 10;
-
-  strpad(oldname, 10, ' ');
-  strpad(newname, 10, ' ');
-  vdpmemcpy(LVL2_PARAMADDR1, newname, 10);
-  vdpmemcpy(LVL2_PARAMADDR2, oldname, 10);
-
-  LVL2_UNIT = unit;
-  LVL2_STATUS = 0;
-
-  call_lvl2(crubase, LVL2_OP_RENDIR);
-
-  return LVL2_STATUS;
+  return base_lvl2(crubase, unit, LVL2_OP_RENDIR, newname, oldname, 0);
 }
 
 unsigned char lvl2_input(int crubase, char unit, char* filename, unsigned char blockcount, struct AddInfo* addInfoPtr) {
+  return direct_io(crubase, unit, LVL2_OP_INPUT, filename, blockcount, addInfoPtr);
+}
+
+unsigned char lvl2_output(int crubase, char unit, char* filename, unsigned char blockcount, struct AddInfo* addInfoPtr) {
+  return direct_io(crubase, unit, LVL2_OP_OUTPUT, filename, blockcount, addInfoPtr);
+}
+
+unsigned char direct_io(int crubase, char unit, char operation, char* filename, unsigned char blockcount, struct AddInfo* addInfoPtr) {
   LVL2_PARAMADDR1 = FBUF;
   strpad(filename, 10, ' ');
   vdpmemcpy(FBUF, filename, 10);
@@ -129,23 +83,29 @@ unsigned char lvl2_input(int crubase, char unit, char* filename, unsigned char b
 
   addInfoPtr->buffer = FBUF + 10;
 
-  call_lvl2(crubase, LVL2_OP_INPUT);
+  call_lvl2(crubase, operation);
 
   return LVL2_STATUS;
 }
 
-unsigned char lvl2_output(int crubase, char unit, char* filename, unsigned char blockcount, struct AddInfo* addInfoPtr) {
-  LVL2_PARAMADDR1 = FBUF;
-  strpad(filename, 10, ' ');
-  vdpmemcpy(FBUF, filename, 10);
-
+// Setup parameters suitably for most lvl2 calls.
+unsigned char __attribute__((noinline)) base_lvl2(int crubase, char unit, char operation, char* name1, char* name2, char param0) {
   LVL2_UNIT = unit;
-  LVL2_PROTECT = blockcount;
-  LVL2_STATUS = ((unsigned int) addInfoPtr) - 0x8300;
+  LVL2_PROTECT = param0;
+  LVL2_PARAMADDR1 = FBUF;
 
-  addInfoPtr->buffer = FBUF + 10;
+  strpad(name1, 10, ' ');
+  vdpmemcpy(LVL2_PARAMADDR1, name1, 10);
 
-  call_lvl2(crubase, LVL2_OP_OUTPUT);
+  if (name2 == 0) {
+    LVL2_STATUS = 0;
+  } else {
+    LVL2_PARAMADDR2 = FBUF + 10;
+    strpad(name2, 10, ' ');
+    vdpmemcpy(LVL2_PARAMADDR2, name2, 10);
+  }
+
+  call_lvl2(crubase, operation);
 
   return LVL2_STATUS;
 }
