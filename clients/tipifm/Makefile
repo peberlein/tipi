@@ -12,20 +12,10 @@ UCFNAME=$(shell echo -n $(FNAME) | tr 'a-z' 'A-Z')
 LDFLAGS=\
   --script=linkfile
 
-OBJECT_LIST=\
-  crt0.o\
-  initdata.o\
-  dsrutil.o\
-  mds_dsrlnk.o\
-  mds_dsrlnkraw.o\
-  lvl2.o\
-  strutil.o\
-  tifloat.o\
-  oem.o\
-  oem_high_chars.o\
-  oem_low_chars.o\
-  help.o\
-  main.o
+SRCS:=$(sort $(wildcard *.c) $(wildcard *.asm))
+
+OBJECT_LIST:=$(SRCS:.c=.o)
+OBJECT_LIST:=$(OBJECT_LIST:.asm=.o)
 
 all: $(FNAME)
 

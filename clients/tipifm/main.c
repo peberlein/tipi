@@ -1,24 +1,19 @@
-
 #include "dsrutil.h"
 #include "lvl2.h"
 #include "strutil.h"
 #include "oem.h"
 #include "tifloat.h"
 #include "main.h"
+#include "commands.h"
+#include "globals.h"
+#include "parsing.h"
 
 #include <string.h>
 #include <conio.h>
-#include <system.h>
 #include <kscan.h>
 #include <vdp.h>
 
-#define GPLWS ((unsigned int*)0x83E0)
-#define DSRTS ((unsigned char*)0x401A)
-
 #define TIPIMAN_VER "1"
-
-#define OPTIONAL 0
-#define REQUIRED 1
 
 const char* const ftypes[] = {
   "D/F",
@@ -29,14 +24,10 @@ const char* const ftypes[] = {
   "DIR"
 };
 
-char buffer[256];
-struct DeviceServiceRoutine* currentDsr;
-char currentPath[256];
 int displayWidth;
 int column;
 
-void initGlobals() {
-  buffer[0] = 0;
+void initObject() {
   displayWidth = 40;
   column = 0;
 }
@@ -85,13 +76,15 @@ void titleScreen() {
 
 void main()
 {
-  initGlobals();
+  initObject();
   setupScreen(isF18A() ? 80 : 40);
   titleScreen();
   loadDriveDSRs();
   currentDsr = dsrList;
   strcpy(currentPath, currentDsr->name);
   strcat(currentPath, ".");
+  char buffer[256];
+  buffer[0] = 0;
 
   while(1) {
     VDP_INT_POLL;
@@ -101,93 +94,6 @@ void main()
     cprintf("\n");
     handleCommand(buffer);
   }
-}
-
-#define MATCH(x,y) (!(strcmpi(x,y)))
-
-#define COMMAND(x, y) if (MATCH(tok, x)) y();
-
-void handleCommand(char *buffer) {
-  char* tok = strtok(buffer, " ");
-  COMMAND("cd", handleCd)
-  else COMMAND("delete", handleDelete)
-  else COMMAND("dir", handleDir)
-  else COMMAND("drives", handleDrives)
-  else COMMAND("exit", handleExit)
-  else COMMAND("help", handleHelp)
-  else COMMAND("lvl2", handleLvl2)
-  else COMMAND("mkdir", handleMkdir)
-  else COMMAND("protect", handleProtect)
-  else COMMAND("rename", handleRename)
-  else COMMAND("rmdir", handleRmdir)
-  else COMMAND("unprotect", handleUnprotect)
-  else COMMAND("ver", handleVer)
-  else COMMAND("width", handleWidth)
-  else cprintf("unknown command: %s\n", tok);
-}
-
-void handleCd() {
-  struct DeviceServiceRoutine* dsr = 0;
-  char path[256];
-  parsePathParam(&dsr, path, REQUIRED);
-  if (dsr == 0) {
-    cprintf("no path: drive or folder specified\n");
-    return;
-  }
-  if (path[strlen(path)-1] != '.') {
-    strcat(path, ".");
-  }
-  unsigned char stat = existsDir(dsr, path);
-  if (stat != 0) {
-    cprintf("error, device/folder not found: %s\n", path);
-    return;
-  }
-  
-  currentDsr = dsr;
-  strcpy(currentPath, path);
-}
-
-void handleVer() {
-  titleScreen();
-}
-
-void handleDrives() {
-  int i = 0;
-  int cb = 0;
-  
-  while(dsrList[i].name[0] != 0) {
-    cb = dsrList[i].crubase;
-    cprintf("%x -", cb);
-    while (cb == dsrList[i].crubase) {
-      cprintf(" %s", dsrList[i].name);
-      i++;
-    }
-    cprintf("\n");
-  }
-}
-
-void handleLvl2() {
-  char* tok = strtok(0, " ");
-  int crubase = htoi(tok);
-
-  if (crubase == 0) {
-    cprintf("no crubase specified\n");
-    return;
-  }
-
-  enableROM(crubase);
-  struct DeviceRomHeader* rom = (struct DeviceRomHeader*)0x4000;
-
-  struct NameLink* link = rom->basiclnk;
-  while(link != 0) {
-    if (link->name[0] == 1) {
-      cprintf(" >%x", link->name[1]);
-    }
-    link = link->next;
-  }
-  cprintf("\n");
-
-  disableROM(crubase);
 }
 
 void onVolInfo(struct VolInfo* volInfo) {
@@ -208,211 +114,4 @@ void onDirEntry(struct DirEntry* dirEntry) {
     cprintf("\n");
     column = 0;
   }
-}
-
-int parsePath(char* path, char* devicename) {
-  char workbuf[14];
-  int crubase = 0;
-  strncpy(workbuf, path, 14);
-  char* tok = strtok(workbuf, ". ");
-  if (tok != 0 && tok[0] == '1' && strlen(tok) == 4) {
-    crubase = htoi(tok);
-    tok = strtok(0, ". ");
-    strcpy(devicename, tok);
-  } else {
-    strcpy(devicename, tok);
-  }
-  return crubase;
-}
-
-void parsePathParam(struct DeviceServiceRoutine** dsr, char* buffer, int requirements) {
-  buffer[0] = 0; // null terminate so later we can tell if it is prepared or not.
-  char* path = strtok(0, " ");
-  *dsr = currentDsr;
-  if (path == 0) {
-    if (requirements & REQ_DEFAULT == 0) {
-      *dsr = 0;
-      return;
-    }
-    path = currentPath;
-  } else {
-    char devicename[8];
-    if (0 == strcmp("..", path)) {
-      int ldot = lindexof(currentPath, '.', strlen(currentPath) - 2);
-      if (ldot == -1) {
-        *dsr = 0;
-        cprintf("No parent folder\n");
-        return;
-      }
-      strncpy(buffer, currentPath, ldot + 1);
-      return;
-    } else {
-      int crubase = parsePath(path, devicename);
-      *dsr = findDsr(devicename, crubase);
-      if (*dsr == 0) {
-        // not a base device, so try subdir
-        strcpy(buffer, currentPath);
-        strcat(buffer, path);
-        crubase = parsePath(buffer, devicename);
-        *dsr = findDsr(devicename, crubase);
-        // if still not found, then give up.
-        if (*dsr == 0) {  
-          cprintf("device not found.\n");
-          return;
-        }
-      }
-      if (crubase != 0) {
-        path = strtok(path, ".");
-        path = strtok(0, " ");
-      }
-    }
-  }
-  // Todo: test for existance and matching requirements
-  if (buffer[0] == 0) {
-    strcpy(buffer, path);
-  }
-}
-
-void handleDir() {
-  struct DeviceServiceRoutine* dsr = 0;
-  char path[256];
-  parsePathParam(&dsr, path, OPTIONAL);
-  if (dsr == 0) {
-    return;
-  }
-  if (path[strlen(path)-1] != '.') {
-    strcat(path, ".");
-  }
-
-  unsigned char stat = existsDir(dsr, path);
-  if (stat != 0) {
-    cprintf("error, device/folder not found: %s\n", path);
-    return;
-  }
-
-  loadDir(dsr, path, onVolInfo, onDirEntry);
-  column = 0;
-  cprintf("\n");
-}
-
-void handleMkdir() {
-  char* dirname = strtok(0, " ");
-  if (dirname == 0) {
-    cprintf("error, must specify a directory name\n");
-    return;
-  }
-
-  char unit = path2unit(currentPath);
-
-  lvl2_setdir(currentDsr->crubase, unit, currentPath);
-
-  unsigned char err = lvl2_mkdir(currentDsr->crubase, unit, dirname);
-  if (err) {
-    cprintf("cannot create directory %s%s\n", currentPath, dirname);
-  }
-}
-
-void handleProtect() {
-  char* filename = strtok(0, " ");
-  if (filename == 0) {
-    cprintf("error, must specify a file name\n");
-    return;
-  }
-
-  char unit = path2unit(currentPath);
-
-  lvl2_setdir(currentDsr->crubase, unit, currentPath);
-
-  unsigned char err = lvl2_protect(currentDsr->crubase, unit, filename, 1);
-  if (err) {
-    cprintf("cannot protect file %s%s\n", currentPath, filename);
-  }
-}
-
-void handleUnprotect() {
-  char* filename = strtok(0, " ");
-  if (filename == 0) {
-    cprintf("error, must specify a file name\n");
-    return;
-  }
-
-  char unit = path2unit(currentPath);
-
-  lvl2_setdir(currentDsr->crubase, unit, currentPath);
-
-  unsigned char err = lvl2_protect(currentDsr->crubase, unit, filename, 0);
-  if (err) {
-    cprintf("cannot unprotect file %s%s\n", currentPath, filename);
-  }
-}
-
-void handleDelete() {
-
-}
-
-void handleRename() {
-  char* filename = strtok(0, " ");
-  if (filename == 0) {
-    cprintf("error, must specify source file name\n");
-    return;
-  }
-  char* newname = strtok(0, " ");
-  if (newname == 0) {
-    cprintf("error, must specify new file name\n");
-    return;
-  }
-
-  char unit = path2unit(currentPath);
-
-  char path[256];
-  strcpy(path, currentPath);
-  strcat(path, ".");
-  strcat(path, filename);
-
-  unsigned char stat = existsDir(currentDsr, path);
-
-  lvl2_setdir(currentDsr->crubase, unit, currentPath);
-  unsigned char err = 0xff;
-  if (stat == 0) {
-    err = lvl2_rendir(currentDsr->crubase, unit, filename, newname);
-  } else {
-    err = lvl2_rename(currentDsr->crubase, unit, filename, newname);
-  }
-
-  if (err) {
-    cprintf("cannot rename file %s%s\n", currentPath, filename);
-  }
-}
-
-void handleRmdir() {
-  char* dirname = strtok(0, " ");
-  if (dirname == 0) {
-    cprintf("error, must specify a directory name\n");
-    return;
-  }
-
-  char unit = path2unit(currentPath);
-
-  lvl2_setdir(currentDsr->crubase, unit, currentPath);
-
-  unsigned char err = lvl2_rmdir(currentDsr->crubase, unit, dirname);
-  if (err) {
-    cprintf("cannot remove directory %s%s\n", currentPath, dirname);
-  }
-}
-
-void handleWidth() {
-  char* tok = strtok(0, " ");
-  int width = atoi(tok);
-
-  if (width == 40 || width == 80) {
-    setupScreen(width);
-  } else {
-    cprintf("no width specified\n");
-  }
-}
-
-void handleExit() {
-  resetF18A();
-  exit();
 }
