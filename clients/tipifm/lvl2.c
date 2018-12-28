@@ -81,7 +81,7 @@ unsigned char direct_io(int crubase, char unit, char operation, char* filename, 
   LVL2_PROTECT = blockcount;
   LVL2_STATUS = ((unsigned int) addInfoPtr) - 0x8300;
 
-  addInfoPtr->buffer = FBUF + 10;
+  addInfoPtr->buffer = FBUF + 0x100; // safe from file and path name overwrites.
 
   call_lvl2(crubase, operation);
 

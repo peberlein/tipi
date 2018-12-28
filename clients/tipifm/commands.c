@@ -36,9 +36,16 @@ void handleCopy() {
     cprintf("error, must specify a file name\n");
     return;
   }
+  char path[256];
+  // check that file exists
+  strcpy(path, currentPath);
+  strcat(path, filename);
+  if (0 != existsFile(currentDsr, path)) {
+    cprintf("error, file not found: %s%s\n", currentPath, filename);
+    return;
+  }
 
   struct DeviceServiceRoutine* dsr = 0;
-  char path[256];
   parsePathParam(&dsr, path, PR_REQUIRED);
   if (dsr == 0) {
     cprintf("no path: drive or folder specified\n");
@@ -52,6 +59,64 @@ void handleCopy() {
     cprintf("error, device/folder not found: %s\n", path);
     return;
   }
+
+  struct AddInfo* addInfoPtr = (struct AddInfo*) 0x8320;
+  addInfoPtr->first_sector = 0;
+  addInfoPtr->eof_offset = 0;
+  addInfoPtr->flags = 0;
+  addInfoPtr->rec_length = 0;
+  addInfoPtr->records = 0;
+  addInfoPtr->recs_per_sec = 0;
+  
+  unsigned int source_crubase = currentDsr->crubase;
+  char source_unit = path2unit(currentPath);
+  unsigned int dest_crubase = dsr->crubase;
+  char dest_unit = path2unit(path);
+
+  lvl2_setdir(source_crubase, source_unit, currentPath);
+  unsigned char err = lvl2_input(source_crubase, source_unit, filename, 0, addInfoPtr);
+  if (err) {
+    cprintf("error reading file: %x\n", err);
+    return;
+  }
+
+  int totalBlocks = addInfoPtr->first_sector;
+  if (totalBlocks == 0) {
+    cprintf("error, source file is empty.\n");
+    return;
+  }
+
+  cprintf("\n"); // prepare status line
+
+  // write file meta data
+  lvl2_setdir(dest_crubase, dest_unit, path);
+  err = lvl2_output(dest_crubase, dest_unit, filename, 0, addInfoPtr);
+  if (err) {
+    cprintf("error writing file: %x\n", err);
+    return;
+  }
+
+  int blockId = 0;
+  while(blockId < totalBlocks) {
+    addInfoPtr->first_sector = blockId;
+    lvl2_setdir(source_crubase, source_unit, currentPath);
+    err = lvl2_input(source_crubase, source_unit, filename, 1, addInfoPtr);
+    if (err) {
+      cprintf("error reading file: %x\n", err);
+      return;
+    }
+
+    lvl2_setdir(dest_crubase, dest_unit, path);
+    err = lvl2_output(dest_crubase, dest_unit, filename, 1, addInfoPtr);
+    if (err) {
+      cprintf("error reading file: %x\n", err);
+      return;
+    }
+
+    blockId++;
+    cprintf("\rcopied block %d of %d", blockId, totalBlocks);
+  }
+  cprintf("\n"); // end status line.
 }
 
 void handleVer() {

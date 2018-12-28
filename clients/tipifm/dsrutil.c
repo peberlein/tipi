@@ -18,6 +18,13 @@ unsigned char existsDir(struct DeviceServiceRoutine* dsr, const char* pathname) 
   return open_err;
 }
 
+unsigned char existsFile(struct DeviceServiceRoutine* dsr, const char* pathname) {
+  struct PAB pab;
+  initPab(&pab);
+  pab.pName = (char*) pathname;
+  return dsr_status(dsr, &pab);
+}
+
 unsigned char loadDir(struct DeviceServiceRoutine* dsr, const char* pathname, vol_entry_cb vol_cb, dir_entry_cb dir_cb) {
   struct PAB pab;
   
