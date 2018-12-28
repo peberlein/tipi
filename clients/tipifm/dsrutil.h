@@ -61,6 +61,7 @@ unsigned char dsr_close(struct DeviceServiceRoutine* dsr, struct PAB* pab);
 unsigned char dsr_read(struct DeviceServiceRoutine* dsr, struct PAB* pab, int recordNumber);
 unsigned char dsr_write(struct DeviceServiceRoutine* dsr, struct PAB* pab, unsigned char* record);
 unsigned char dsr_status(struct DeviceServiceRoutine* dsr, struct PAB* pab);
+unsigned char dsr_delete(struct DeviceServiceRoutine* dsr, struct PAB* pab);
 
 typedef void (*vol_entry_cb)(struct VolInfo*);
 typedef void (*dir_entry_cb)(struct DirEntry*);

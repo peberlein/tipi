@@ -126,6 +126,13 @@ unsigned char dsr_status(struct DeviceServiceRoutine* dsr, struct PAB* pab) {
   return result;
 }
 
+unsigned char dsr_delete(struct DeviceServiceRoutine* dsr, struct PAB* pab) {
+  pab->OpCode = DSR_DELETE;
+
+  unsigned char result = mds_dsrlnk(dsr->crubase, pab, VPAB, DSR_MODE_LVL3);
+  return result;
+}
+
 void loadDriveDSRs() {
   struct DeviceServiceRoutine* listHead = dsrList;
 

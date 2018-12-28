@@ -170,7 +170,24 @@ void handleUnprotect() {
 }
 
 void handleDelete() {
+  char* filename = strtok(0, " ");
+  if (filename == 0) {
+    cprintf("error, must specify a file name\n");
+    return;
+  }
 
+  char buffer[256];
+  strcpy(buffer, currentPath);
+  strcat(buffer, ".");
+  strcat(buffer, filename);
+  struct PAB pab;
+  initPab(&pab);
+  pab.pName = buffer;
+  
+  unsigned char err = dsr_delete(currentDsr, &pab);
+  if (err) {
+    cprintf("cannot delete file %s%s\n", currentPath, filename);
+  }
 }
 
 void handleRename() {
