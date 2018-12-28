@@ -102,14 +102,14 @@ void handleCopy() {
     lvl2_setdir(source_crubase, source_unit, currentPath);
     err = lvl2_input(source_crubase, source_unit, filename, 1, addInfoPtr);
     if (err) {
-      cprintf("error reading file: %x\n", err);
+      cprintf("\nerror reading file: %x\n", err);
       return;
     }
 
     lvl2_setdir(dest_crubase, dest_unit, path);
     err = lvl2_output(dest_crubase, dest_unit, filename, 1, addInfoPtr);
     if (err) {
-      cprintf("error reading file: %x\n", err);
+      cprintf("\nerror reading file: %x\n", err);
       return;
     }
 
