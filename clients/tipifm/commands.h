@@ -2,6 +2,7 @@
 #define _COMMANDS_H 1
 
 void handleCd();
+void handleChecksum();
 void handleCopy();
 void handleDelete();
 void handleDir();

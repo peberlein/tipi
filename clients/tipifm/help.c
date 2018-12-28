@@ -8,12 +8,17 @@ const char* HELP_COMMANDS =
 "\n"
 "syntax: 'help' (cmd)\n"
 "\n"
-"cmd = 'cd' 'copy' 'delete' 'dir' 'drives' 'exit' 'lvl2' 'mkdir' 'protect' 'unprotect' 'rename' 'rmdir' 'ver' 'width'\n";
+"cmd = 'cd' 'checksum' 'copy' 'delete' 'dir' 'drives' 'exit' 'lvl2' 'mkdir' 'protect' 'unprotect' 'rename' 'rmdir' 'ver' 'width'\n";
 
 const char* HELP_CD =
 "Change directory\n"
 "\n"
 "syntax: 'cd' (path|..)\n";
+
+const char* HELP_CHECKSUM =
+"Checksum a file\n"
+"\n"
+"syntax: 'checksum' (name)\n";
 
 const char* HELP_COPY =
 "Copy file from current location to specified path\n"
@@ -88,6 +93,7 @@ void handleHelp() {
     cprintf(HELP_COMMANDS);
   } 
   CMD_HELP("cd", HELP_CD)
+  CMD_HELP("checksum",HELP_CHECKSUM)
   CMD_HELP("copy",HELP_COPY)
   CMD_HELP("delete",HELP_DELETE)
   CMD_HELP("dir",HELP_DIR)

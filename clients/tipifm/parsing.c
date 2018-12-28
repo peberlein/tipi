@@ -13,6 +13,7 @@
 void handleCommand(char *buffer) {
   char* tok = strtok(buffer, " ");
   COMMAND("cd", handleCd)
+  else COMMAND("checksum", handleChecksum)
   else COMMAND("copy", handleCopy)
   else COMMAND("delete", handleDelete)
   else COMMAND("dir", handleDir)
