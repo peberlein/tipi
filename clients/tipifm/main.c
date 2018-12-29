@@ -7,6 +7,7 @@
 #include "commands.h"
 #include "globals.h"
 #include "parsing.h"
+#include "getstr.h"
 
 #include <string.h>
 #include <conio.h>
@@ -30,6 +31,7 @@ int column;
 void initObject() {
   displayWidth = 40;
   column = 0;
+  backspace = 0;
 }
 
 void sleep(int jiffies) {
@@ -90,9 +92,11 @@ void main()
     VDP_INT_POLL;
     strset(buffer, 0, 255);
     cprintf("\n[%x.%s]\n$ ", currentDsr->crubase, currentPath);
-    getstr(2, 23, buffer, 255);
+    getstr(2, 23, buffer, displayWidth - 3, backspace);
     cprintf("\n");
-    handleCommand(buffer);
+    if (buffer[0] != 0) {
+      handleCommand(buffer);
+    }
   }
 }
 

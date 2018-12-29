@@ -5,5 +5,6 @@
 
 extern struct DeviceServiceRoutine* currentDsr;
 extern char currentPath[256];
+extern int backspace;
 
 #endif
