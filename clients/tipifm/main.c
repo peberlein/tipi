@@ -14,7 +14,7 @@
 #include <kscan.h>
 #include <vdp.h>
 
-#define TIPIMAN_VER "1.1"
+#define TIPIMAN_VER "1.2"
 
 const char* const ftypes[] = {
   "D/F",
