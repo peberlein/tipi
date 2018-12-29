@@ -5,6 +5,12 @@
 #include <kscan.h>
 
 static unsigned char mycgetc();
+#define CUR_OVERWRITE 219
+#define CUR_INSERT '_'
+unsigned char cursor = CUR_OVERWRITE;
+
+int insertMode = 0;
+
 
 // Requirements:
 //  Act like TI BASIC keyboard input as much as logical
@@ -34,6 +40,13 @@ void getstr(int x, int y, char* var, int limit, int backspace) {
           cputc(' ');
         break;
       case 4: // F2 - insert
+          if (insertMode) {
+            insertMode = 0;
+            cursor = CUR_OVERWRITE;
+          } else {
+            insertMode = 1;
+            cursor = CUR_INSERT;
+          }
         break;
       case 7: // F3 - erase line
         idx = strlen(var);
@@ -70,6 +83,16 @@ void getstr(int x, int y, char* var, int limit, int backspace) {
         break;
       default: // alpha numeric
         if (key >= 32 && key <= 122) {
+          if (insertMode) {
+            int end = strlen(var);
+            if (end != limit) {
+              for(int i=end; i>idx; i--) {
+                var[i] = var[i-1];
+              }
+              cputs(var+idx);
+            }
+          }
+          gotoxy(x+idx,y);
           cputc(key);
           var[idx++] = key;
         }
@@ -90,7 +113,6 @@ static unsigned char mycgetc() {
     unsigned int blinkCounter = BLINK_DELAY;
     unsigned int vdpaddr = conio_getvram();
     unsigned char screenChar = vdpreadchar(vdpaddr);
-    unsigned char cursor = 219;
 
     if (last_conio_key != 255) {
         k = last_conio_key;
