@@ -14,17 +14,39 @@
 #define LVL2_PARAMADDR1 *((volatile unsigned int*)0x834E)
 #define LVL2_PARAMADDR2 *((volatile unsigned int*)0x8350)
 
+#define UNITNO(x) (x & 0x0F)
+#define OPNAME(x,y) ((x & 0xF0)|(y & 0x0F))
 
-char path2unit(char* currentPath) {
+// Returns lvl2 base code in left nibble, and unit number in right nibble
+// 	Floppy disk controllers:	DSK	>1x	
+//	Myarc harddisk controller:	WDS	>2x
+//	Scuzzy controller		SCS	>2x
+//	IDE controller:			IDE	>8x
+//	Ti to PC serial connection:	HDX	>9x
+unsigned char path2unitmask(char* currentPath) {
+  unsigned char operationSet = 0x10;
   char drive[9];
   strncpy(drive, currentPath, 9);
   int l = indexof(drive, '.');
   drive[l] = 0;
   if (0 == strcmp("TIPI", drive)) {
-    return 0;
+    return 0x10;
   }
   l = strlen(drive);
-  return drive[l-1] - '0';
+  unsigned char unit = drive[l-1] - '0' & 0x0F;
+  cprintf("unit: %x\n", unit);
+  drive[l] = 0;
+  if (0 == strcmp(drive, "WDS")) {
+    operationSet = 0x20;
+  } else if (0 == strcmp(drive, "SCS")) {
+    operationSet = 0x20;
+  } else if (0 == strcmp(drive, "IDE")) {
+    operationSet = 0x80;
+  } else if (0 == strcmp(drive, "HDX")) {
+    operationSet = 0x90;
+  }
+  cprintf("operationSet: %x\n", operationSet);
+  return operationSet | unit;
 }
 
 unsigned char lvl2_protect(int crubase, char unit, char* filename, char protect) {
@@ -40,10 +62,10 @@ unsigned char lvl2_setdir(int crubase, char unit, char* path) {
   vdpchar(FBUF,(unsigned char) len);
   vdpmemcpy(FBUF+1, path, len);
 
-  LVL2_UNIT = unit;
+  LVL2_UNIT = UNITNO(unit);
   LVL2_STATUS = 0;
 
-  call_lvl2(crubase, LVL2_OP_SETDIR);
+  call_lvl2(crubase, OPNAME(unit, LVL2_OP_SETDIR));
 
   return LVL2_STATUS;
 }
@@ -77,13 +99,13 @@ unsigned char direct_io(int crubase, char unit, char operation, char* filename, 
   strpad(filename, 10, ' ');
   vdpmemcpy(FBUF, filename, 10);
 
-  LVL2_UNIT = unit;
+  LVL2_UNIT = UNITNO(unit);
   LVL2_PROTECT = blockcount;
   LVL2_STATUS = ((unsigned int) addInfoPtr) - 0x8300;
 
   addInfoPtr->buffer = FBUF + 0x100; // safe from file and path name overwrites.
 
-  call_lvl2(crubase, operation);
+  call_lvl2(crubase, OPNAME(unit, operation));
 
   return LVL2_STATUS;
 }

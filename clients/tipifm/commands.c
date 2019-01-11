@@ -54,7 +54,7 @@ void handleChecksum() {
   addInfoPtr->recs_per_sec = 0;
   
   unsigned int source_crubase = currentDsr->crubase;
-  char source_unit = path2unit(currentPath);
+  unsigned char source_unit = path2unitmask(currentPath);
 
   lvl2_setdir(source_crubase, source_unit, currentPath);
   unsigned char err = lvl2_input(source_crubase, source_unit, filename, 0, addInfoPtr);
@@ -141,9 +141,9 @@ void handleCopy() {
   addInfoPtr->recs_per_sec = 0;
   
   unsigned int source_crubase = currentDsr->crubase;
-  char source_unit = path2unit(currentPath);
+  unsigned char source_unit = path2unitmask(currentPath);
   unsigned int dest_crubase = dsr->crubase;
-  char dest_unit = path2unit(path);
+  unsigned char dest_unit = path2unitmask(path);
 
   lvl2_setdir(source_crubase, source_unit, currentPath);
   unsigned char err = lvl2_input(source_crubase, source_unit, filename, 0, addInfoPtr);
@@ -262,7 +262,7 @@ void handleMkdir() {
     return;
   }
 
-  char unit = path2unit(currentPath);
+  unsigned char unit = path2unitmask(currentPath);
 
   lvl2_setdir(currentDsr->crubase, unit, currentPath);
 
@@ -279,7 +279,7 @@ void handleProtect() {
     return;
   }
 
-  char unit = path2unit(currentPath);
+  unsigned char unit = path2unitmask(currentPath);
 
   lvl2_setdir(currentDsr->crubase, unit, currentPath);
 
@@ -296,7 +296,7 @@ void handleUnprotect() {
     return;
   }
 
-  char unit = path2unit(currentPath);
+  unsigned char unit = path2unitmask(currentPath);
 
   lvl2_setdir(currentDsr->crubase, unit, currentPath);
 
@@ -321,7 +321,12 @@ void handleDelete() {
   initPab(&pab);
   pab.pName = buffer;
   
-  unsigned char err = dsr_delete(currentDsr, &pab);
+  unsigned char err = dsr_status(currentDsr, &pab);
+  if (err) {
+    cprintf("file not found %s%s\n", currentPath, filename);
+  }
+
+  err = dsr_delete(currentDsr, &pab);
   if (err) {
     cprintf("cannot delete file %s%s\n", currentPath, filename);
   }
@@ -339,7 +344,7 @@ void handleRename() {
     return;
   }
 
-  char unit = path2unit(currentPath);
+  unsigned char unit = path2unitmask(currentPath);
 
   char path[256];
   strcpy(path, currentPath);
@@ -368,7 +373,7 @@ void handleRmdir() {
     return;
   }
 
-  char unit = path2unit(currentPath);
+  unsigned char unit = path2unitmask(currentPath);
 
   lvl2_setdir(currentDsr->crubase, unit, currentPath);
 

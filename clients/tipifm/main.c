@@ -14,7 +14,7 @@
 #include <kscan.h>
 #include <vdp.h>
 
-#define TIPIMAN_VER "1.2"
+#define TIPIMAN_VER "1.3"
 
 const char* const ftypes[] = {
   "D/F",
@@ -66,9 +66,9 @@ void setupScreen(int width) {
     set_text();
   }
 
-  defineChars();
   clrscr();
   gotoxy(0,23);
+  defineChars();
 }
 
 void titleScreen() {
@@ -87,6 +87,7 @@ void main()
   strcat(currentPath, ".");
   char buffer[256];
   buffer[0] = 0;
+  defineChars();
 
   while(1) {
     VDP_INT_POLL;

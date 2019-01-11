@@ -22,7 +22,8 @@ struct __attribute__((__packed__)) AddInfo {
   unsigned int records;
 }; 
 
-char path2unit(char* currentPath);
+unsigned char path2unitmask(char* currentPath);
+
 unsigned char lvl2_mkdir(int crubase, char unit, char* dirname);
 unsigned char lvl2_protect(int crubase, char unit, char* filename, char protect);
 unsigned char lvl2_rename(int crubase, char unit, char* oldname, char* newname);
