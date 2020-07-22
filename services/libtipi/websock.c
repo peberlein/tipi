@@ -601,7 +601,7 @@ static int websocket_serve(void)
 		int hdr_len = sprintf(resp, 
 			"HTTP/1.0 200 OK\r\n"
 			"Connection: close\r\n"
-			"Content-Length: %ld\r\n"
+			"Content-Length: %lld\r\n"
 			"%s%s%s"
 			"\r\n",
 			size,
