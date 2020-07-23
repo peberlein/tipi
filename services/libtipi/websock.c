@@ -310,8 +310,9 @@ static int websocket_read(int fd, int *opcode, unsigned char *data, int data_siz
     Py_buffer buffer;
 
     if (readMsg == NULL)
-      readMsg = PyByteArray_FromStringAndSize("", 0);
-    PyByteArray_Resize(readMsg, len);
+      readMsg = PyByteArray_FromStringAndSize("", len);
+    else
+      PyByteArray_Resize(readMsg, len);
     if (PyObject_GetBuffer(readMsg, &buffer, PyBUF_CONTIG) < 0)
       return -1;
     data = buffer.buf;

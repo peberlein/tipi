@@ -319,13 +319,7 @@ static PyObject* gpio_readMsg(void)
   int msglen = readByte() << 8;
   msglen |= readByte();
 
-  if (msglen == 0) {
-    Py_INCREF(Py_None);
-    return Py_None;
-  }
-
-  PyObject *message = PyByteArray_FromStringAndSize("", 0);
-  PyByteArray_Resize(message, msglen);
+  PyObject *message = PyByteArray_FromStringAndSize("", msglen);
   Py_buffer buffer;
   if (PyObject_GetBuffer(message, &buffer, PyBUF_CONTIG) >= 0) {
     int i;
@@ -338,8 +332,9 @@ static PyObject* gpio_readMsg(void)
 
 static PyObject* gpio_sendMsg(unsigned char *data, int len)
 {
-  if (resetProtocol() < 0)
-    return NULL;
+  while (resetProtocol() < 0) {
+    /* do not return Exception for send */
+  }
   modeSend();
   sendByte(len >> 8);
   sendByte(len & 0xff);
@@ -388,22 +383,31 @@ tipi_sendMsg(PyObject *self, PyObject *args)
   if (!PyArg_ParseTuple(args, "O", &arg1))
     return NULL;
 
-  if (PyList_Check(arg1)) {
-    int len = PyList_Size(arg1);
+  if (PyObject_CheckBuffer(arg1)) {
+    Py_buffer buffer;
+    if (PyObject_GetBuffer(arg1, &buffer, PyBUF_CONTIG_RO) < 0) {
+      PyErr_SetString(PyExc_ValueError, "PyObject_GetBuffer failed");
+      return NULL;
+    }
+    log_printf("buffer len=%d\n", buffer.len);
+    result = sendMsg(buffer.buf, buffer.len);
+    PyBuffer_Release(&buffer);
+
+  } else if (PySequence_Check(arg1)) {
+    int len = PySequence_Size(arg1);
     unsigned char *buf = alloca(len);
     int i;
+
     for (i = 0; i < len; i++) {
-      PyObject *op = PyList_GET_ITEM(arg1, i);
+      PyObject *op = PySequence_GetItem(arg1, i);
       buf[i] = PyLong_AsLong(op);
+      Py_DECREF(op);
     }
     result = sendMsg(buf, len);
 
   } else {
-    Py_buffer buffer;
-    if (PyObject_GetBuffer(arg1, &buffer, PyBUF_CONTIG_RO) < 0)
-      return NULL;
-    result = sendMsg(buffer.buf, buffer.len);
-    PyBuffer_Release(&buffer);
+    PyErr_SetString(PyExc_ValueError, "sendMsg requires buffer or sequence");
+    result = NULL;
   }
   return result;
 }
