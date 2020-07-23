@@ -80,6 +80,7 @@ cd /home/tipi
 git clone https://github.com/jedimatt42/tipi.git tipi
 cd /home/tipi/tipi
 git checkout release
+git submodule update --init
 ./setup.sh
 cd setup
 sudo ./post-upgrade.sh
@@ -122,7 +123,6 @@ browseable=Yes
 writeable=Yes
 only guest=no
 guest ok=Yes
-valid user=tipi
 create mask=0644
 directory mask=0755
 force user=tipi
