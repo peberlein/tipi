@@ -135,9 +135,8 @@ class CatalogFile(object):
                 sectors = ti_files.getSectors(header) + 1
                 recordlen = ti_files.recordLength(header)
                 return self.__encodeDirRecord(f, ft, sectors, recordlen)
-
             # else it is a native file
-            if fp.lower().endswith(NativeFile.dv80suffixes):
+            elif fp.lower().endswith(NativeFile.dv80suffixes):
                 # dis/var
                 ft = 2
                 recCount = self.__line_count(fp)
@@ -160,20 +159,20 @@ class CatalogFile(object):
 
     def __encodeVolRecord(self, name, ftype, sectors, recordLength):
         if self.longnames:
-            recname = bytearray(name, 'ascii')
+            recname = bytearray(name, 'utf-8')
             buff = bytearray(28 + len(recname))
         else:
-            recname = bytearray(tinames.encodeName(name), 'ascii')
+            recname = bytearray(tinames.encodeName(name), 'utf-8')
             buff = bytearray(38)
 
         return self.__encodeCatRecord(buff, recname, ftype, sectors, recordLength)
 
     def __encodeDirRecord(self, name, ftype, sectors, recordLength):
         if self.longnames:
-            recname = bytearray(name, 'ascii')
+            recname = bytearray(name, 'utf-8')
             buff = bytearray(28 + len(recname))
         else:
-            recname = bytearray(tinames.asTiShortName(name), 'ascii')
+            recname = bytearray(tinames.asTiShortName(name), 'utf-8')
             buff = bytearray(38)
 
         return self.__encodeCatRecord(buff, recname, ftype, sectors, recordLength)

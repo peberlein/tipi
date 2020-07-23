@@ -23,9 +23,9 @@ class TipiVariable(object):
         self.tipi_io = tipi_io
 
     def processRequest(self, message):
-        logger.info(message)
+        logger.info(f'request: {message}')
         # Now that we have message, let's parse it:
-        ti_message = message.split(chr(0x1E))
+        ti_message = str(message, 'latin1').split(chr(0x1E))
 
         caller_guid = ti_message[0] if len(ti_message) >= 1 else ""  # Program's GUID
         context = (
@@ -53,7 +53,7 @@ class TipiVariable(object):
         var_key6 = ti_message[15] if len(ti_message) >= 16 else ""  # var key
         var_val6 = ti_message[16] if len(ti_message) >= 17 else ""  # var val
 
-        response = str(results_var) if len(results_var) else ""
+        response = results_var if len(results_var) else ""
 
         # Load our existing variables into a dict:
         self.ti_vars = {}
@@ -75,8 +75,8 @@ class TipiVariable(object):
 
             f.close
 
-        if os.path.isfile(str(global_file)):
-            with open(str(global_file), "r") as f:
+        if os.path.isfile(global_file):
+            with open(global_file, "r") as f:
                 for line in f:
                     line = line.rstrip(
                         "\n\r"
@@ -128,7 +128,8 @@ class TipiVariable(object):
                 "REMOTE_HOST" not in self.ti_global
                 or "REMOTE_PORT" not in self.ti_global
             ):
-                return bytearray("0" + chr(0x1E) + "ERROR")
+                logger.error("REMOTE HOST NOT SET")
+                return bytearray("0" + chr(0x1E) + "ERROR", 'latin1')
 
             self.ti_vars[response] = ""  # Blank out our old response
 
@@ -186,20 +187,22 @@ class TipiVariable(object):
                 sock.connect(server_address)
 
                 # Send data
-                sock.sendall(message + "\n")
+                sock.sendall(bytearray(message + "\n", 'latin1'))
 
                 data = sock.recv(1024)
+                data = str(data, 'latin1')
 
                 if (
                     'File "' in data or "Traceback" in data
                 ):  # BAD! Usually means compilation error on far end, esp when running via inetd.
-                    return bytearray("0" + chr(0x1E) + "ERROR")
+                    return bytearray("0" + chr(0x1E) + "ERROR", 'latin1')
 
             except:
+                logger.exception('server error')
                 self.ti_vars[response] = "ERROR"
 
                 self.store(caller_guid)
-                return bytearray("0" + chr(0x1E) + "ERROR")
+                return bytearray("0" + chr(0x1E) + "ERROR", 'latin1')
 
             finally:
                 sock.close()
@@ -208,7 +211,7 @@ class TipiVariable(object):
 
             self.store(caller_guid)  # Write our vars to our local file
 
-            return bytearray("1" + chr(0x1E) + self.ti_vars[response])
+            return bytearray("1" + chr(0x1E) + self.ti_vars[response], 'latin1')
 
         elif (
             action == "R" or action == "RS"
@@ -219,7 +222,7 @@ class TipiVariable(object):
                 # Need to check to see if variable is queued, uses ASCII 31 (Unit Separator) to delimit.
                 # If so, we want to pop off the first one and return it.
                 if chr(0x1E) in str(self.ti_vars[str(var_key1)]):
-                    items = str(self.ti_vars[str(var_key1)]).split(chr(0x1E))
+                    items = self.ti_vars[str(var_key1)].split(chr(0x1E))
 
                     first_item = items.pop(0)
 
@@ -228,9 +231,9 @@ class TipiVariable(object):
                     self.store(caller_guid)
 
                     if action == "R":
-                        return bytearray("1" + chr(0x1E) + first_item)
+                        return bytearray("1" + chr(0x1E) + first_item, 'latin1')
                     else:
-                        return bytearray(first_item)
+                        return bytearray(first_item, 'latin1')
 
                 else:
                     response = self.ti_vars[str(var_key1)]
@@ -241,15 +244,15 @@ class TipiVariable(object):
                     self.store(caller_guid)
 
                     if action == "R":
-                        return bytearray("1" + chr(0x1E) + response)
+                        return bytearray("1" + chr(0x1E) + response, 'latin1')
                     else:
-                        return bytearray(response)
+                        return bytearray(response, 'latin1')
 
             else:
                 if action == "R":
-                    return bytearray("0" + chr(0x1E) + "ERROR")
+                    return bytearray("0" + chr(0x1E) + "ERROR", 'latin1')
                 else:
-                    return bytearray("ERROR")
+                    return bytearray("ERROR", 'latin1')
 
         return bytearray()
 
@@ -275,6 +278,7 @@ class TipiVariable(object):
     def handle(self, bytes):
         # Handle all tipi_io here, so main logic is just dealing with bytes in and out
         message = self.tipi_io.receive()
-        self.tipi_io.send(self.processRequest(str(message)))
+        response = self.processRequest(message)
+        self.tipi_io.send(response)
 
         return True
