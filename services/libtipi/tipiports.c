@@ -124,6 +124,10 @@ static unsigned char readReg(int reg)
     ok = piParity == tipiParity;
     if (!ok) {
       errors++;
+      if (errors > 10000) {
+        // TIPI board may be off
+        usleep(100000/*us*/); // 100ms
+      }
     }
   }
 #ifdef LOG
@@ -166,6 +170,10 @@ static void writeReg(unsigned char value, int reg)
     ok = piParity == tipiParity;
     if (!ok) {
       errors++;
+      if (errors > 10000) {
+        // TIPI board may be off
+        usleep(100000/*us*/); // 100ms
+      }
     }
   }
 
